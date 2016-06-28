@@ -14,7 +14,7 @@
 	],
 	"autoload" : {
 		"psr-4" : {
-			"StingerSoft\\DoctrineEntitySearchBundle\\" : ""
+			"StingerSoft\\DoctrineCommons\\" : ""
 		},
 		"exclude-from-classmap" : [
 			"/Tests/"
