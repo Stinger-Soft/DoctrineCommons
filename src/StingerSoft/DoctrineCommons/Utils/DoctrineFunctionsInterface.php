@@ -15,13 +15,13 @@ namespace StingerSoft\DoctrineCommons\Utils;
  * Interface specifying common methods on entities managed by doctrine
  */
 interface DoctrineFunctionsInterface {
-	
+
 	/**
 	 *
 	 * @var string The default service ID of the implementation (if any exists) of this service
 	 */
 	const SERVICE_ID = 'stinger_soft.commons.doctrine';
-	
+
 	/**
 	 * Returns the class names of all managed entities implementing the specified interface
 	 *
@@ -43,7 +43,7 @@ interface DoctrineFunctionsInterface {
 	 *        
 	 */
 	public function getEntitiesByInterface($interface, $groupByBundle = false);
-	
+
 	/**
 	 * Returns the class names of all managed entities extending the specified parent class
 	 *
@@ -65,7 +65,7 @@ interface DoctrineFunctionsInterface {
 	 *        
 	 */
 	public function getEntitiesByParent($parent, $groupByBundle = false);
-	
+
 	/**
 	 * Fetches the bundle name from the given entity
 	 *
@@ -73,7 +73,7 @@ interface DoctrineFunctionsInterface {
 	 * @return string|null
 	 */
 	public function getBundleName($entity);
-	
+
 	/**
 	 * Creates a human readable name of the given entity.
 	 * If the entity implements the Labelable interface it will be used, otherwise the short classname is used
@@ -81,4 +81,12 @@ interface DoctrineFunctionsInterface {
 	 * @param string|object $entity        	
 	 */
 	public function getHumanReadableEntityName($entity);
+
+	/**
+	 * Transforms the given doctrine proxy object into a 'real' entity
+	 *
+	 * @param object $object        	
+	 * @return object|NULL
+	 */
+	public function unproxifyFilter($object);
 }

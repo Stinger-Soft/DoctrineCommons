@@ -15,33 +15,35 @@ use Doctrine\ORM\EntityManager;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
+use Doctrine\Common\Persistence\AbstractManagerRegistry;
+use Doctrine\Common\Util\ClassUtils;
 
 class DoctrineFunctions implements DoctrineFunctionsInterface {
-	
+
 	/**
 	 *
-	 * @var EntityManager
+	 * @var AbstractManagerRegistry
 	 */
-	private $em;
-	
+	private $registry;
+
 	/**
 	 *
 	 * @var KernelInterface
 	 */
 	private $kernel;
-	
+
 	/**
 	 *
 	 * @var TranslatorInterface
 	 */
 	private $translator;
-	
+
 	/**
 	 *
 	 * @var ClassMetadata[]
 	 */
 	private $allMetadata;
-	
+
 	/**
 	 * Default constructor
 	 *
@@ -49,12 +51,12 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @param EntityManager $em        	
 	 * @param TranslatorInterface $translator        	
 	 */
-	public function __construct(EntityManager $em, TranslatorInterface $translator, KernelInterface $kernel = null) {
+	public function __construct(AbstractManagerRegistry $registry, TranslatorInterface $translator, KernelInterface $kernel = null) {
 		$this->kernel = $kernel;
-		$this->em = $em;
+		$this->registry = $registry;
 		$this->translator = $translator;
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -62,11 +64,11 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \Pec\Bundle\PlatformBundle\Commons\DoctrineFunctionsInterface::getEntitiesByInterface()
 	 */
 	public function getEntitiesByInterface($interface, $groupByBundle = false) {
-		return $this->getEntitiesByCallback ( function (\ReflectionClass $rc) use ($interface) {
-			return array_key_exists ( $interface, $rc->getInterfaces () );
-		}, $groupByBundle );
+		return $this->getEntitiesByCallback(function (\ReflectionClass $rc) use ($interface) {
+			return array_key_exists($interface, $rc->getInterfaces());
+		}, $groupByBundle);
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -74,11 +76,11 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \Pec\Bundle\PlatformBundle\Commons\DoctrineFunctionsInterface::getEntitiesByParent()
 	 */
 	public function getEntitiesByParent($parent, $groupByBundle = false) {
-		return $this->getEntitiesByCallback ( function (\ReflectionClass $rc) use ($parent) {
-			return $rc->isSubclassOf ( $parent );
-		}, $groupByBundle );
+		return $this->getEntitiesByCallback(function (\ReflectionClass $rc) use ($parent) {
+			return $rc->isSubclassOf($parent);
+		}, $groupByBundle);
 	}
-	
+
 	/**
 	 * Returns all managed entities, filtered by the given callback
 	 *
@@ -99,26 +101,26 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @return string[] all management entities implementing the given interface
 	 */
 	protected function getEntitiesByCallback($callback, $groupByBundle = false) {
-		$entities = array ();
-		foreach ( $this->getAllMetadata () as $m ) {
-			if ($m->getReflectionClass ()->isAbstract () || $m->getReflectionClass ()->isInterface ()) {
+		$entities = array();
+		foreach($this->getAllMetadata() as $m) {
+			if($m->getReflectionClass()->isAbstract() || $m->getReflectionClass()->isInterface()) {
 				continue;
 			}
-			if ($callback ( $m->getReflectionClass () )) {
-				if ($groupByBundle) {
-					$bundle = $this->getBundleName ( $m->getName () );
-					if (! array_key_exists ( $bundle, $entities )) {
-						$entities [$bundle] = array ();
+			if($callback($m->getReflectionClass())) {
+				if($groupByBundle) {
+					$bundle = $this->getBundleName($m->getName());
+					if(!array_key_exists($bundle, $entities)) {
+						$entities[$bundle] = array();
 					}
-					$entities [$bundle] [$m->getName ()] = $this->getHumanReadableEntityName ( $m->getName () );
+					$entities[$bundle][$m->getName()] = $this->getHumanReadableEntityName($m->getName());
 				} else {
-					$entities [] = $m->getName ();
+					$entities[] = $m->getName();
 				}
 			}
 		}
 		return $entities;
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -126,30 +128,30 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \Pec\Bundle\PlatformBundle\Commons\DoctrineFunctionsInterface::getHumanReadableEntityName()
 	 */
 	public function getHumanReadableEntityName($entity) {
-		if (is_object ( $entity )) {
-			if (method_exists ( $entity, 'getEntityLabel' ) && method_exists ( $entity, 'getEntityLabelTranslationDomain' )) {
-				return $this->translator->trans ( $entity->getEntityLabel (), array (), $entity->getEntityLabelTranslationDomain () );
+		if(is_object($entity)) {
+			if(method_exists($entity, 'getEntityLabel') && method_exists($entity, 'getEntityLabelTranslationDomain')) {
+				return $this->translator->trans($entity->getEntityLabel(), array(), $entity->getEntityLabelTranslationDomain());
 			}
-			return $this->getShortClassName ( get_class ( $entity ) );
+			return $this->getShortClassName(get_class($entity));
 		}
-		if (is_string ( $entity )) {
+		if(is_string($entity)) {
 			try {
-				$dummyReflection = new \ReflectionClass ( $entity );
-				if ($dummyReflection->isAbstract () || $dummyReflection->isInterface ()) {
-					return $dummyReflection->getShortName ();
+				$dummyReflection = new \ReflectionClass($entity);
+				if($dummyReflection->isAbstract() || $dummyReflection->isInterface()) {
+					return $dummyReflection->getShortName();
 				}
-				$dummy = $dummyReflection->newInstance ();
-				return $this->getHumanReadableEntityName ( $dummy );
-			} catch ( \Exception $e ) {
-				$classParts = explode ( '\\', $entity );
-				$class = array_pop ( $classParts );
+				$dummy = $dummyReflection->newInstance();
+				return $this->getHumanReadableEntityName($dummy);
+			} catch(\Exception $e) {
+				$classParts = explode('\\', $entity);
+				$class = array_pop($classParts);
 				return $class;
 			}
 		}
 		
 		return null;
 	}
-	
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -157,35 +159,53 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \Pec\Bundle\PlatformBundle\Commons\DoctrineFunctionsInterface::getBundleName()
 	 */
 	public function getBundleName($entity) {
-		if (! $this->kernel) {
- 			throw new \InvalidArgumentException('You must construct this class with a valid kernel!');
+		if(!$this->kernel) {
+			throw new \InvalidArgumentException('You must construct this class with a valid kernel!');
 		}
-		$bundles = $this->kernel->getBundles ();
-		if (is_object ( $entity )) {
-			$entity = get_class ( $entity );
+		$bundles = $this->kernel->getBundles();
+		if(is_object($entity)) {
+			$entity = get_class($entity);
 		}
-		$dataBaseNamespace = substr ( $entity, 0, strpos ( $entity, '\\Entity\\' ) );
-		foreach ( $bundles as $type => $bundle ) {
-			$bundleRefClass = new \ReflectionClass ( $bundle );
-			if ($bundleRefClass->getNamespaceName () === $dataBaseNamespace) {
+		$dataBaseNamespace = substr($entity, 0, strpos($entity, '\\Entity\\'));
+		foreach($bundles as $type => $bundle) {
+			$bundleRefClass = new \ReflectionClass($bundle);
+			if($bundleRefClass->getNamespaceName() === $dataBaseNamespace) {
 				return $type;
 			}
 		}
 		return null;
 	}
-	
+
+	/**
+	 *
+	 * {@inheritdoc}
+	 *
+	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::unproxifyFilter()
+	 */
+	public function unproxifyFilter($object) {
+		try {
+			$class = ClassUtils::getClass($object);
+			$em = $this->registry->getManagerForClass($object);
+			$em->detach($object);
+			$item = $em->find($class, $object->getId());
+			return $item;
+		} catch(\Exception $e) {
+			return null;
+		}
+	}
+
 	/**
 	 * Returns all management class metadata
 	 *
 	 * @return ClassMetadata[]
 	 */
-	protected function getAllMetadata() {
-		if (! $this->allMetadata) {
-			$this->allMetadata = $this->em->getMetadataFactory ()->getAllMetadata ();
+	protected function getAllMetadata($managerName = null) {
+		if(!$this->allMetadata) {
+			$this->allMetadata = $this->registry->getManager($managerName)->getMetadataFactory()->getAllMetadata();
 		}
 		return $this->allMetadata;
 	}
-	
+
 	/**
 	 * Generates a short name from the entity FQN
 	 *
@@ -193,8 +213,8 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @return string
 	 */
 	protected function getShortClassName($entity) {
-		$classParts = explode ( '\\', $entity );
-		$class = array_pop ( $classParts );
+		$classParts = explode('\\', $entity);
+		$class = array_pop($classParts);
 		return $class;
 	}
 }
