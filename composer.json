@@ -18,7 +18,7 @@
 			"StingerSoft\\DoctrineCommons\\" : "src/StingerSoft/DoctrineCommons"
 		},
 		"exclude-from-classmap" : [
-			"/Tests/"
+			"/tests/"
 		]
 	},
 	"license" : "Apache-2.0",
