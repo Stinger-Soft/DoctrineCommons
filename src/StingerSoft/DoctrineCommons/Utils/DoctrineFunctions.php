@@ -129,7 +129,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function getHumanReadableEntityName($entity) {
 		if(method_exists($entity, 'getEntityLabel') && method_exists($entity, 'getEntityLabelTranslationDomain')) {
-			return $this->translator->trans(call_user_func(arrray($entity, 'getEntityLabel')), array(), call_user_func(arrray($entity, 'getEntityLabelTranslationDomain')));
+			return $this->translator->trans(call_user_func(array($entity, 'getEntityLabel')), array(), call_user_func(array($entity, 'getEntityLabelTranslationDomain')));
 		}
 		if(is_object($entity)) {
 			return $this->getShortClassName(get_class($entity));
