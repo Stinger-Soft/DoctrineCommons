@@ -128,13 +128,28 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \Pec\Bundle\PlatformBundle\Commons\DoctrineFunctionsInterface::getHumanReadableEntityName()
 	 */
 	public function getHumanReadableEntityName($entity) {
-		if(method_exists($entity, 'getEntityLabel') && method_exists($entity, 'getEntityLabelTranslationDomain')) {
-			return $this->translator->trans(call_user_func(array($entity, 'getEntityLabel')), array(), call_user_func(array($entity, 'getEntityLabelTranslationDomain')));
-		}
 		if(is_object($entity)) {
+			if(method_exists($entity, 'getEntityLabel') && method_exists($entity, 'getEntityLabelTranslationDomain')) {
+				return $this->translator->trans(call_user_func(array(
+					$entity,
+					'getEntityLabel' 
+				)), array(), call_user_func(array(
+					$entity,
+					'getEntityLabelTranslationDomain' 
+				)));
+			}
 			return $this->getShortClassName(get_class($entity));
 		}
 		if(is_string($entity)) {
+			if(method_exists($entity, 'getClassLabel') && method_exists($entity, 'getClassLabelTranslationDomain')) {
+				return $this->translator->trans(call_user_func(array(
+					$entity,
+					'getClassLabel' 
+				)), array(), call_user_func(array(
+					$entity,
+					'getClassLabelTranslationDomain' 
+				)));
+			}
 			try {
 				$dummyReflection = new \ReflectionClass($entity);
 				if($dummyReflection->isAbstract() || $dummyReflection->isInterface()) {
