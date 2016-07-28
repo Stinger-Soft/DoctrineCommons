@@ -17,6 +17,7 @@ use Symfony\Component\Translation\TranslatorInterface;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\AbstractManagerRegistry;
 use Doctrine\Common\Util\ClassUtils;
+use Doctrine\ORM\Proxy\Proxy;
 
 class DoctrineFunctions implements DoctrineFunctionsInterface {
 
@@ -199,6 +200,9 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function unproxifyFilter($object) {
 		try {
+			if(!is_object($object)) return null;
+			if(!($object instanceof Proxy)) return $object;
+			
 			$class = ClassUtils::getClass($object);
 			$em = $this->registry->getManagerForClass($object);
 			$em->detach($object);
