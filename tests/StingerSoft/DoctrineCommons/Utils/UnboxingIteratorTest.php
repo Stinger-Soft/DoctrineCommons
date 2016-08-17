@@ -22,6 +22,8 @@ class UnboxingIteratorTest extends \PHPUnit_Framework_TestCase {
 		
 		$resultMock->method('next')->willReturnOnConsecutiveCalls(array(
 			'TestEntity' 
+		), array(
+			null 
 		), null);
 		return $resultMock;
 	}
@@ -38,10 +40,15 @@ class UnboxingIteratorTest extends \PHPUnit_Framework_TestCase {
 		$this->assertFalse($iterator->current());
 		$this->assertEquals(0, $iterator->key());
 		$this->assertFalse($iterator->valid());
+		
+		$this->assertFalse($iterator->next());
+		$this->assertFalse($iterator->current());
+		$this->assertEquals(0, $iterator->key());
+		$this->assertFalse($iterator->valid());
 	}
 
 	/**
-	 * Where lightning strikes once, a ninja rewind twice!
+	 * Where lightning strikes once, a ninja rewinds twice!
 	 *
 	 * @expectedException \Exception
 	 *
