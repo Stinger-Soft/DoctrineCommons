@@ -204,7 +204,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			if(!($object instanceof Proxy)) return $object;
 			
 			$class = ClassUtils::getClass($object);
-			$em = $this->registry->getManagerForClass($object);
+			$em = $this->registry->getManagerForClass($class);
 			$em->detach($object);
 			$item = $em->find($class, $object->getId());
 			return $item;
