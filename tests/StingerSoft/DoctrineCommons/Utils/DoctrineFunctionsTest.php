@@ -20,19 +20,24 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use StingerSoft\TestBundle\StingerSoftTestBundle;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\BlogInterface;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\AbstractBlog;
+use StingerSoft\DoctrineCommons\Fixtures\ORM\BlogWithNiceConstructor;
+use StingerSoft\DoctrineCommons\Fixtures\ORM\ProxyBlog;
 
 class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
-	
+
 	/**
+	 *
 	 * @return DoctrineFunctionsInterface
 	 */
-	protected function getDoctrineService($kernel = null){
+	protected function getDoctrineService($kernel = null) {
 		$service = new DoctrineFunctions($this->getMockDoctrineRegistry(), $this->getTranslatorMock(), $kernel);
 		return $service;
 	}
-	
+
 	protected function mockKernel($bundles = array()) {
-		$kernel = $this->getMockBuilder(KernelInterface::class)->setMethods(array('getBundles'))->getMockForAbstractClass();
+		$kernel = $this->getMockBuilder(KernelInterface::class)->setMethods(array(
+			'getBundles' 
+		))->getMockForAbstractClass();
 		$kernel->method('getBundles')->willReturn($bundles);
 		return $kernel;
 	}
@@ -66,7 +71,9 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$this->em->flush();
 		$this->em->clear();
 		
-		$blog = $this->em->getRepository(Blog::class)->findOneBy(array('title' => 'blog1'));
+		$blog = $this->em->getRepository(Blog::class)->findOneBy(array(
+			'title' => 'blog1' 
+		));
 		$category = $blog->getCategory();
 		
 		$this->assertNotNull($category);
@@ -79,9 +86,13 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$this->assertNotNull($category);
 		$this->assertInstanceOf('\Doctrine\ORM\Proxy\Proxy', $category);
 		
-		$blog2 = $this->em->getRepository(Blog::class)->findOneBy(array('title' => 'blog2'));
+		$blog2 = $this->em->getRepository(Blog::class)->findOneBy(array(
+			'title' => 'blog2' 
+		));
 		$category = $blog2->getCategory();
 		$this->assertNotNull($category);
+		
+		$this->assertNull($this->getDoctrineService()->unproxifyFilter(new ProxyBlog()));
 	}
 
 	protected function getUsedEntityFixtures() {
@@ -89,10 +100,10 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 			Blog::class,
 			IconifiedBlog::class,
 			SoftdeletableCategory::class,
-			AbstractBlog::class,
+			AbstractBlog::class 
 		);
 	}
-	
+
 	public function testGetEntityIcon() {
 		$blog = new Blog();
 		
@@ -119,44 +130,50 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$this->assertNotNull($iconBlogIcon);
 		$this->assertEquals($iconBlogIcon, 'purpose');
 	}
-	
+
 	/**
 	 * @expectedException InvalidArgumentException
 	 */
 	public function testGetBundleNameWOKernel() {
 		$this->getDoctrineService()->getBundleName('Test');
 	}
-	
+
 	public function testGetBundleNameUnkownEntity() {
 		$name = $this->getDoctrineService($this->mockKernel())->getBundleName('Test');
 		$this->assertNull($name);
 	}
-	
+
 	public function testGetBundleName() {
-		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$bundles = array(
+			'StingerSoftTestBundle' => StingerSoftTestBundle::class 
+		);
 		$name = $this->getDoctrineService($this->mockKernel($bundles))->getBundleName('StingerSoft\\TestBundle\\Entity\\Test');
 		$this->assertEquals('StingerSoftTestBundle', $name);
 	}
-	
+
 	public function testGetBundleNameForObject() {
-		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$bundles = array(
+			'StingerSoftTestBundle' => StingerSoftTestBundle::class 
+		);
 		$name = $this->getDoctrineService($this->mockKernel($bundles))->getBundleName(new Blog());
 		$this->assertNull($name);
 	}
-	
+
 	public function testGetEntitiesByParent() {
 		$this->assertEmpty($this->getDoctrineService()->getEntitiesByParent(SoftdeletableCategory::class));
 		$this->assertContains(IconifiedBlog::class, $this->getDoctrineService()->getEntitiesByParent(Blog::class));
 	}
-	
+
 	public function testGetEntitiesByInterface() {
 		$result = $this->getDoctrineService()->getEntitiesByInterface(BlogInterface::class);
 		$this->assertContains(IconifiedBlog::class, $result);
 		$this->assertContains(Blog::class, $result);
 	}
-	
+
 	public function testGetEntitiesByParentPrefixed() {
-		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$bundles = array(
+			'StingerSoftTestBundle' => StingerSoftTestBundle::class 
+		);
 		$this->assertEmpty($this->getDoctrineService($this->mockKernel($bundles))->getEntitiesByParent(SoftdeletableCategory::class, true));
 		$result = $this->getDoctrineService($this->mockKernel($bundles))->getEntitiesByParent(Blog::class, true);
 		$this->assertNotEmpty($result);
@@ -166,9 +183,11 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$this->assertArrayHasKey(IconifiedBlog::class, $result);
 		$this->assertEquals('Blog with Icon', $result[IconifiedBlog::class]);
 	}
-	
+
 	public function testGetEntitiesByInterfacePrefixed() {
-		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$bundles = array(
+			'StingerSoftTestBundle' => StingerSoftTestBundle::class 
+		);
 		$result = $this->getDoctrineService($this->mockKernel($bundles))->getEntitiesByInterface(BlogInterface::class, true);
 		$this->assertNotEmpty($result);
 		$this->assertArrayHasKey('', $result);
@@ -180,8 +199,7 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$this->assertArrayHasKey(Blog::class, $result);
 		$this->assertEquals('Blog', $result[Blog::class]);
 	}
-	
-	
+
 	public function testGetHumanReadableEntityName() {
 		$name = $this->getDoctrineService()->getHumanReadableEntityName(Blog::class);
 		$this->assertEquals('Blog', $name);
@@ -191,5 +209,14 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		
 		$name = $this->getDoctrineService()->getHumanReadableEntityName(SoftdeletableCategory::class);
 		$this->assertEquals('DeleteableCategory', $name);
+		
+		$name = $this->getDoctrineService()->getHumanReadableEntityName(BlogInterface::class);
+		$this->assertEquals('BlogInterface', $name);
+		
+		$name = $this->getDoctrineService()->getHumanReadableEntityName(23);
+		$this->assertNull($name);
+		
+		$name = $this->getDoctrineService()->getHumanReadableEntityName(BlogWithNiceConstructor::class);
+		$this->assertEquals('BlogWithNiceConstructor', $name);
 	}
 }

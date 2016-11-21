@@ -13,8 +13,8 @@ namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\MappedSuperclass
- */
-abstract class AbstractBlog {
+class BlogWithNiceConstructor {
+
+	public function __construct(Blog $blog) {
+	}
 }
