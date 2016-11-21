@@ -19,6 +19,7 @@ use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\KernelInterface;
 use StingerSoft\TestBundle\StingerSoftTestBundle;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\BlogInterface;
+use StingerSoft\DoctrineCommons\Fixtures\ORM\AbstractBlog;
 
 class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 	
@@ -87,7 +88,8 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		return array(
 			Blog::class,
 			IconifiedBlog::class,
-			SoftdeletableCategory::class 
+			SoftdeletableCategory::class,
+			AbstractBlog::class,
 		);
 	}
 	
@@ -151,5 +153,43 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$result = $this->getDoctrineService()->getEntitiesByInterface(BlogInterface::class);
 		$this->assertContains(IconifiedBlog::class, $result);
 		$this->assertContains(Blog::class, $result);
+	}
+	
+	public function testGetEntitiesByParentPrefixed() {
+		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$this->assertEmpty($this->getDoctrineService($this->mockKernel($bundles))->getEntitiesByParent(SoftdeletableCategory::class, true));
+		$result = $this->getDoctrineService($this->mockKernel($bundles))->getEntitiesByParent(Blog::class, true);
+		$this->assertNotEmpty($result);
+		$this->assertArrayHasKey('', $result);
+		$result = $result[''];
+		$this->assertCount(1, $result);
+		$this->assertArrayHasKey(IconifiedBlog::class, $result);
+		$this->assertEquals('Blog with Icon', $result[IconifiedBlog::class]);
+	}
+	
+	public function testGetEntitiesByInterfacePrefixed() {
+		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$result = $this->getDoctrineService($this->mockKernel($bundles))->getEntitiesByInterface(BlogInterface::class, true);
+		$this->assertNotEmpty($result);
+		$this->assertArrayHasKey('', $result);
+		$result = $result[''];
+		
+		$this->assertCount(2, $result);
+		$this->assertArrayHasKey(IconifiedBlog::class, $result);
+		$this->assertEquals('Blog with Icon', $result[IconifiedBlog::class]);
+		$this->assertArrayHasKey(Blog::class, $result);
+		$this->assertEquals('Blog', $result[Blog::class]);
+	}
+	
+	
+	public function testGetHumanReadableEntityName() {
+		$name = $this->getDoctrineService()->getHumanReadableEntityName(Blog::class);
+		$this->assertEquals('Blog', $name);
+		
+		$name = $this->getDoctrineService()->getHumanReadableEntityName(IconifiedBlog::class);
+		$this->assertEquals('Blog with Icon', $name);
+		
+		$name = $this->getDoctrineService()->getHumanReadableEntityName(SoftdeletableCategory::class);
+		$this->assertEquals('DeleteableCategory', $name);
 	}
 }

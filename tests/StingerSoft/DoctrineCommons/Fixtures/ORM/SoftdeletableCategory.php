@@ -61,4 +61,12 @@ class SoftdeletableCategory {
 	public function setDeletedAt($deletedAt) {
 		$this->deletedAt = $deletedAt;
 	}
+
+	public function getEntityLabel() {
+		return 'DeleteableCategory';
+	}
+
+	public function getEntityLabelTranslationDomain() {
+		return '';
+	}
 }

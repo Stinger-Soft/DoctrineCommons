@@ -13,23 +13,10 @@ namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
-class IconifiedBlog extends Blog {
 
-	public static function getEntityIcon($purpose = null) {
-		if($purpose !== null) {
-			return $purpose;
-		}
-		return "icon";
-	}
+/**
+ * @ORM\MappedSuperclass
+ */
+abstract class AbstractBlog {
 	
-	public static function getClassLabel() {
-		return 'Blog with Icon';
-	}
-	
-	public static function getClassLabelTranslationDomain() {
-		return '';
-	}
 }
