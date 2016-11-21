@@ -123,10 +123,10 @@ class TablePrefixServiceTest extends \PHPUnit_Framework_TestCase {
 		$cm->method('isRootEntity')->will($this->returnValue(true));
 	
 		$args = new LoadClassMetadataEventArgs($cm, $this->mockEntityManager(SqlitePlatform::class));
-		$args->getClassMetadata()->table = array('indexes' => array('name' => 'params'));
+		$args->getClassMetadata()->table = array('name' => 'test', 'indexes' => array('name' => 'params'));
 		$this->assertNull($this->prefixService->loadClassMetadata($args));
 		$this->assertEquals($cm->associationMappings, self::$assocMappingAfter);
-		$this->assertEquals(array('platform_platform__name' => 'params'), $cm->table['indexes']);
+		$this->assertEquals(array('platform_platform_test_name' => 'params'), $cm->table['indexes']);
 	}
 	
 	protected function mockEventArgs() {

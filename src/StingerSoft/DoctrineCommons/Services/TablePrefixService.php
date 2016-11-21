@@ -37,6 +37,9 @@ class TablePrefixService implements \Doctrine\Common\EventSubscriber {
 	 * @param LoadClassMetadataEventArgs $args        	
 	 */
 	public function loadClassMetadata(LoadClassMetadataEventArgs $args) {
+		/**
+		 * @var \Doctrine\ORM\Mapping\ClassMetadataInfo $classMetadata
+		 */
 		$classMetadata = $args->getClassMetadata();
 		
 		// Do not re-apply the prefix in an inheritance hierarchy.
