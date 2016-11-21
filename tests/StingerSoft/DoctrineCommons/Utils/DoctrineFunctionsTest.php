@@ -14,6 +14,7 @@ namespace StingerSoft\DoctrineCommons\Utils;
 use StingerSoft\DoctrineCommons\AbstractORMGedmoTestCase;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\SoftdeletableCategory;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\Blog;
+use StingerSoft\DoctrineCommons\Fixtures\ORM\IconifiedBlog;
 
 class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 	
@@ -77,5 +78,33 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 			Blog::class,
 			SoftdeletableCategory::class 
 		);
+	}
+	
+	public function testGetEntityIcon() {
+		$blog = new Blog();
+		
+		$blogIcon = $this->getDoctrineService()->getEntityIcon($blog);
+		$this->assertNull($blogIcon);
+		$blogIcon = $this->getDoctrineService()->getEntityIcon(get_class($blog));
+		$this->assertNull($blogIcon);
+		$blogIcon = $this->getDoctrineService()->getEntityIcon($blog, "purpose");
+		$this->assertNull($blogIcon);
+		$blogIcon = $this->getDoctrineService()->getEntityIcon(get_class($blog), "purpose");
+		$this->assertNull($blogIcon);
+		
+		$iconBlog = new IconifiedBlog();
+		$iconBlogIcon = $this->getDoctrineService()->getEntityIcon($iconBlog);
+		$this->assertNotNull($iconBlogIcon);
+		$this->assertEquals($iconBlogIcon, 'icon');
+		$iconBlogIcon = $this->getDoctrineService()->getEntityIcon(get_class($iconBlog));
+		$this->assertNotNull($iconBlogIcon);
+		$this->assertEquals($iconBlogIcon, 'icon');
+		$iconBlogIcon = $this->getDoctrineService()->getEntityIcon($iconBlog, "purpose");
+		$this->assertNotNull($iconBlogIcon);
+		$this->assertEquals($iconBlogIcon, 'purpose');
+		$iconBlogIcon = $this->getDoctrineService()->getEntityIcon(get_class($iconBlog), "purpose");
+		$this->assertNotNull($iconBlogIcon);
+		$this->assertEquals($iconBlogIcon, 'purpose');
+		
 	}
 }

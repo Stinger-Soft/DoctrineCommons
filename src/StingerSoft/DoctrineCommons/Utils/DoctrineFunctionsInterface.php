@@ -89,4 +89,16 @@ interface DoctrineFunctionsInterface {
 	 * @return object|NULL
 	 */
 	public function unproxifyFilter($object);
+
+	/**
+	 * Get the name / class of the icon to be displayed for the entity for a 
+	 * certain purpose.
+	 *
+	 * @param string|object $entity
+	 *        	the entity or class of entity to get an icon for
+	 * @param string|null $purpose
+	 *        	a purpose to get the entity for (if any) or <code>null</code>
+	 * @return string|null the icon name / class or <code>null</code>.
+	 */
+	public function getEntityIcon($entity, $purpose = null);
 }

@@ -159,9 +159,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 				$dummy = $dummyReflection->newInstance();
 				return $this->getHumanReadableEntityName($dummy);
 			} catch(\Exception $e) {
-				$classParts = explode('\\', $entity);
-				$class = array_pop($classParts);
-				return $class;
+				return $this->getShortClassName($entity);
 			}
 		}
 		
@@ -212,6 +210,21 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			return null;
 		}
 	}
+	
+	/**
+	 * {@inheritDoc}
+	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::getEntityIcon()
+	 */
+	public function getEntityIcon($entity, $purpose = null) {
+		if(method_exists($entity, 'getEntityIcon')) {
+			return call_user_func(array(
+				$entity,
+				'getEntityIcon'
+			), $purpose);
+		}
+		return null;
+	}
+	
 
 	/**
 	 * Returns all management class metadata
