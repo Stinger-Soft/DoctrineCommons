@@ -15,6 +15,7 @@ use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\DBAL\Platforms\SqlitePlatform;
 
 class TablePrefixServiceTest extends \PHPUnit_Framework_TestCase {
 
@@ -115,7 +116,19 @@ class TablePrefixServiceTest extends \PHPUnit_Framework_TestCase {
 		$this->assertNull($this->prefixService->loadClassMetadata($args));
 		$this->assertEquals($cm->associationMappings, self::$assocMappingBefore);
 	}
-
+	
+	public function testSqlite() {
+		$cm = $this->mockEventArgs();
+		$cm->method('isInheritanceTypeSingleTable')->will($this->returnValue(true));
+		$cm->method('isRootEntity')->will($this->returnValue(true));
+	
+		$args = new LoadClassMetadataEventArgs($cm, $this->mockEntityManager(SqlitePlatform::class));
+		$args->getClassMetadata()->table = array('indexes' => array('name' => 'params'));
+		$this->assertNull($this->prefixService->loadClassMetadata($args));
+		$this->assertEquals($cm->associationMappings, self::$assocMappingAfter);
+		$this->assertEquals(array('platform_platform__name' => 'params'), $cm->table['indexes']);
+	}
+	
 	protected function mockEventArgs() {
 		$cm = $this->getMockBuilder('Doctrine\ORM\Mapping\ClassMetadata')->setMethods(array(
 			'getAssociationMappings',
@@ -134,17 +147,17 @@ class TablePrefixServiceTest extends \PHPUnit_Framework_TestCase {
 		return $cm;
 	}
 
-	protected function mockEntityManager() {
+	protected function mockEntityManager($paltform = MySqlPlatform::class) {
 		$em = $this->getMockBuilder(EntityManager::class)->setMethods(array(
 			'getConnection',
 			'getDatabasePlatform' 
 		))->disableOriginalConstructor()->getMockForAbstractClass();
 		$em->method('getConnection')->will($this->returnSelf());
-		$em->method('getDatabasePlatform')->will($this->returnValue($this->mockMysqlPlatform()));
+		$em->method('getDatabasePlatform')->will($this->returnValue($this->mockPlatform($paltform)));
 		return $em;
 	}
 
-	protected function mockMysqlPlatform() {
-		return $this->getMockBuilder(MySqlPlatform::class)->disableOriginalConstructor()->getMock();
+	protected function mockPlatform($paltform) {
+		return $this->getMockBuilder($paltform)->disableOriginalConstructor()->getMock();
 	}
 }
