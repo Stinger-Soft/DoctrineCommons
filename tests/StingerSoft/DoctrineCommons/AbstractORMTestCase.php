@@ -114,6 +114,6 @@ abstract class AbstractORMTestCase extends AbstractDatabaseTestCase {
 	}
 
 	protected function getPaths() {
-		return array();
+		return array(dirname(__DIR__));
 	}
 }

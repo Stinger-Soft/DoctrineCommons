@@ -23,7 +23,8 @@
 	},
 	"autoload-dev" : {
 		"psr-4" : {
-			"StingerSoft\\DoctrineCommons\\" : "tests/StingerSoft/DoctrineCommons"
+			"StingerSoft\\DoctrineCommons\\" : "tests/StingerSoft/DoctrineCommons",
+			"StingerSoft\\TestBundle\\" : "tests/StingerSoft/TestBundle"
 		}
 	},
 	"license" : "Apache-2.0",

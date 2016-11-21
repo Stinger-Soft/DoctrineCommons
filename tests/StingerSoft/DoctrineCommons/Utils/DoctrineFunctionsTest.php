@@ -15,15 +15,25 @@ use StingerSoft\DoctrineCommons\AbstractORMGedmoTestCase;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\SoftdeletableCategory;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\Blog;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\IconifiedBlog;
+use Symfony\Component\HttpKernel\Kernel;
+use Symfony\Component\HttpKernel\KernelInterface;
+use StingerSoft\TestBundle\StingerSoftTestBundle;
+use StingerSoft\DoctrineCommons\Fixtures\ORM\BlogInterface;
 
 class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 	
 	/**
 	 * @return DoctrineFunctionsInterface
 	 */
-	protected function getDoctrineService(){
-		$service = new DoctrineFunctions($this->getMockDoctrineRegistry(), $this->getTranslatorMock());
+	protected function getDoctrineService($kernel = null){
+		$service = new DoctrineFunctions($this->getMockDoctrineRegistry(), $this->getTranslatorMock(), $kernel);
 		return $service;
+	}
+	
+	protected function mockKernel($bundles = array()) {
+		$kernel = $this->getMockBuilder(KernelInterface::class)->setMethods(array('getBundles'))->getMockForAbstractClass();
+		$kernel->method('getBundles')->willReturn($bundles);
+		return $kernel;
 	}
 
 	/**
@@ -76,6 +86,7 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 	protected function getUsedEntityFixtures() {
 		return array(
 			Blog::class,
+			IconifiedBlog::class,
 			SoftdeletableCategory::class 
 		);
 	}
@@ -105,6 +116,40 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$iconBlogIcon = $this->getDoctrineService()->getEntityIcon(get_class($iconBlog), "purpose");
 		$this->assertNotNull($iconBlogIcon);
 		$this->assertEquals($iconBlogIcon, 'purpose');
-		
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testGetBundleNameWOKernel() {
+		$this->getDoctrineService()->getBundleName('Test');
+	}
+	
+	public function testGetBundleNameUnkownEntity() {
+		$name = $this->getDoctrineService($this->mockKernel())->getBundleName('Test');
+		$this->assertNull($name);
+	}
+	
+	public function testGetBundleName() {
+		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$name = $this->getDoctrineService($this->mockKernel($bundles))->getBundleName('StingerSoft\\TestBundle\\Entity\\Test');
+		$this->assertEquals('StingerSoftTestBundle', $name);
+	}
+	
+	public function testGetBundleNameForObject() {
+		$bundles = array('StingerSoftTestBundle' => StingerSoftTestBundle::class);
+		$name = $this->getDoctrineService($this->mockKernel($bundles))->getBundleName(new Blog());
+		$this->assertNull($name);
+	}
+	
+	public function testGetEntitiesByParent() {
+		$this->assertEmpty($this->getDoctrineService()->getEntitiesByParent(SoftdeletableCategory::class));
+		$this->assertContains(IconifiedBlog::class, $this->getDoctrineService()->getEntitiesByParent(Blog::class));
+	}
+	
+	public function testGetEntitiesByInterface() {
+		$result = $this->getDoctrineService()->getEntitiesByInterface(BlogInterface::class);
+		$this->assertContains(IconifiedBlog::class, $result);
+		$this->assertContains(Blog::class, $result);
 	}
 }

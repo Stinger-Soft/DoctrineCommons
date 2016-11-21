@@ -11,17 +11,5 @@
  */
 namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
-use Doctrine\ORM\Mapping as ORM;
-
-/**
- * @ORM\Entity
- */
-class IconifiedBlog extends Blog {
-
-	public static function getEntityIcon($purpose = null) {
-		if($purpose !== null) {
-			return $purpose;
-		}
-		return "icon";
-	}
+interface BlogInterface {
 }

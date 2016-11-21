@@ -16,7 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity
  */
-class Blog {
+class Blog implements BlogInterface {
 
 	/**
 	 * @ORM\Id

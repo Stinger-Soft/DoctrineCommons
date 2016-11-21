@@ -9,19 +9,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
+namespace StingerSoft\TestBundle;
 
-use Doctrine\ORM\Mapping as ORM;
-
-/**
- * @ORM\Entity
- */
-class IconifiedBlog extends Blog {
-
-	public static function getEntityIcon($purpose = null) {
-		if($purpose !== null) {
-			return $purpose;
-		}
-		return "icon";
-	}
+class StingerSoftTestBundle {
 }
