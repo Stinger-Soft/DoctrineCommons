@@ -54,7 +54,15 @@ class JsonExporter implements ExporterInterface {
 			$qb->from($table->getName());
 			
 			fwrite($handle, '"' . $table->getName() . '":');
-			fwrite($handle, json_encode($qb->execute()->fetchAll(\PDO::FETCH_ASSOC)));
+			$delim = '';
+			$stmt = $qb->execute();
+			fwrite($handle, '[');
+			while(($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false){
+				fwrite($handle, $delim);
+				fwrite($handle, json_encode($row));
+				$delim = ',';
+			}
+			fwrite($handle, ']');
 			if($i != $len - 1) {
 				fwrite($handle, ',');
 			}
