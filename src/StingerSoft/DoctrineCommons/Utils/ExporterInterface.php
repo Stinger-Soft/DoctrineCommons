@@ -21,5 +21,12 @@ interface ExporterInterface {
 	 *
 	 * @param string $filename        	
 	 */
-	public function export($filename);
+	public function exportToFilename($filename);
+
+	/**
+	 * Exports all tables into the given resource handle
+	 *
+	 * @param resource $resource        	
+	 */
+	public function export($resource);
 }

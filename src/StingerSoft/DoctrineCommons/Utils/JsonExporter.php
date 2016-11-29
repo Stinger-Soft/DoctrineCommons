@@ -37,39 +37,48 @@ class JsonExporter implements ExporterInterface {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @see \StingerSoft\DoctrineCommons\Utils\ExporterInterface::exportToFilename()
+	 */
+	public function exportToFilename($filename) {
+		$handle = fopen($filename, 'w');
+		$this->export($handle);
+		fclose($handle);
+	}
+
+	/**
+	 *
+	 * {@inheritdoc}
+	 *
 	 * @see \StingerSoft\DoctrineCommons\Utils\ExporterInterface::export()
 	 */
-	public function export($filename) {
+	public function export($resource) {
 		$tables = $this->connection->getSchemaManager()->listTables();
-		
-		$handle = fopen($filename, 'w');
 		
 		$i = 0;
 		$len = count($tables);
 		
-		fwrite($handle, '{');
+		fwrite($resource, '{');
 		foreach($tables as $table) {
 			$qb = $this->connection->createQueryBuilder();
 			$qb->select('*');
 			$qb->from($table->getName());
 			
-			fwrite($handle, '"' . $table->getName() . '":');
+			fwrite($resource, '"' . $table->getName() . '":');
 			$delim = '';
 			$stmt = $qb->execute();
-			fwrite($handle, '[');
-			while(($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false){
-				fwrite($handle, $delim);
-				fwrite($handle, json_encode($row));
+			fwrite($resource, '[');
+			while(($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+				fwrite($resource, $delim);
+				fwrite($resource, json_encode($row));
 				$delim = ',';
 			}
-			fwrite($handle, ']');
+			fwrite($resource, ']');
 			if($i != $len - 1) {
-				fwrite($handle, ',');
+				fwrite($resource, ',');
 			}
 			$i++;
 		}
 		
-		fwrite($handle, '}');
-		fclose($handle);
+		fwrite($resource, '}');
 	}
 }
