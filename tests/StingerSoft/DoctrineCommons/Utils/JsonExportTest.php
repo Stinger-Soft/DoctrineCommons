@@ -98,5 +98,6 @@ class JsonExportTest extends \PHPUnit_Framework_TestCase {
 		$exporter->export($tempFile);
 		$jsonData = file_get_contents($tempFile);
 		$this->assertJson($jsonData);
+		$this->assertEquals($this->data, json_decode($jsonData, true));
 	}
 }
