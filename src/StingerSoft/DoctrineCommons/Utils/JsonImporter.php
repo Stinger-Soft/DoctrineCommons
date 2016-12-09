@@ -107,7 +107,13 @@ class JsonImporter implements ImporterService {
 	 * Executed before the import is started
 	 */
 	protected function before() {
-		
+		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
+			$this->connection->executeUpdate('EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"');
+		} else if($this->connection->getDatabasePlatform() instanceof MySqlPlatform) {
+			$this->connection->executeUpdate('SET FOREIGN_KEY_CHECKS=0');
+		} else if($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
+			$this->connection->executeUpdate('PRAGMA foreign_keys = OFF');
+		}
 	}
 	
 	/**
