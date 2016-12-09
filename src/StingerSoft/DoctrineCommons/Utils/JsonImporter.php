@@ -104,6 +104,13 @@ class JsonImporter implements ImporterService {
 	}
 
 	/**
+	 * Executed before the import is started
+	 */
+	protected function before() {
+		
+	}
+	
+	/**
 	 * Executed after the import is finished
 	 */
 	protected function after() {
