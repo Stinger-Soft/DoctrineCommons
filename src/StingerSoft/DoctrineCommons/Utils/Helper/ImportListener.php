@@ -113,13 +113,13 @@ class ImportListener extends IdleListener {
 	 * @param int $maxEntries
 	 *        	The maximum amount of entries which should be imported
 	 */
-	public function __construct(JsonStreamImporter $parent, AbstractSchemaManager $schemaManager, Connection $connection, $maxEntries, OutputInterface $output = null) {
-		if($this->output) {
+	public function __construct(JsonStreamImporter $parent, AbstractSchemaManager $schemaManager, Connection $connection, $maxEntries = null, OutputInterface $output = null) {
+		$this->output = $output;
+		if($this->output != null && $maxEntries !== null) {
 			$this->progressbar = new ProgressBar($output, $maxEntries);
 		}
 		$this->connection = $connection;
 		$this->schemaManager = $schemaManager;
-		$this->output = $output;
 		$this->importCommand = $parent;
 	}
 
