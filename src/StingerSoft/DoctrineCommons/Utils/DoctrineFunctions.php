@@ -83,31 +83,18 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	}
 
 	/**
-	 * Returns all managed entities, filtered by the given callback
 	 *
-	 * @param callback $callback
-	 *        	Callback to filter the available entities
-	 * @param boolean $groupByBundle
-	 *        	If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
-	 *        	<pre>
-	 *        	(
-	 *        	[PecPlatformBundle] => Array
-	 *        	(
-	 *        	[Pec\Bundle\PlatformBundle\Entity\User] => User
-	 *        	...
-	 *        	)
-	 *        	),
-	 *        	...
-	 *        	</pre>
-	 * @return string[] all management entities implementing the given interface
+	 * {@inheritdoc}
+	 *
+	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::getEntitiesByCallback()
 	 */
-	protected function getEntitiesByCallback($callback, $groupByBundle = false) {
+	public function getEntitiesByCallback($callback, $groupByBundle = false, $ignoreAbstract = true) {
 		$entities = array();
 		foreach($this->getAllMetadata() as $m) {
-			if($m->getReflectionClass()->isAbstract() || $m->getReflectionClass()->isInterface()) {
+			if($ignoreAbstract && ($m->getReflectionClass()->isAbstract() || $m->getReflectionClass()->isInterface())) {
 				continue;
 			}
-			if($callback($m->getReflectionClass())) {
+			if($callback($m->getReflectionClass(), $m)) {
 				if($groupByBundle) {
 					$bundle = $this->getBundleName($m->getName());
 					if(!array_key_exists($bundle, $entities)) {
@@ -198,8 +185,10 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function unproxifyFilter($object) {
 		try {
-			if(!is_object($object)) return null;
-			if(!($object instanceof Proxy)) return $object;
+			if(!is_object($object))
+				return null;
+			if(!($object instanceof Proxy))
+				return $object;
 			
 			$class = ClassUtils::getClass($object);
 			$em = $this->registry->getManagerForClass($class);
@@ -210,21 +199,22 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			return null;
 		}
 	}
-	
+
 	/**
-	 * {@inheritDoc}
+	 *
+	 * {@inheritdoc}
+	 *
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::getEntityIcon()
 	 */
 	public function getEntityIcon($entity, $purpose = null) {
 		if(method_exists($entity, 'getEntityIcon')) {
 			return call_user_func(array(
 				$entity,
-				'getEntityIcon'
+				'getEntityIcon' 
 			), $purpose);
 		}
 		return null;
 	}
-	
 
 	/**
 	 * Returns all management class metadata

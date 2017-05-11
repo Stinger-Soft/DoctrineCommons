@@ -67,6 +67,29 @@ interface DoctrineFunctionsInterface {
 	public function getEntitiesByParent($parent, $groupByBundle = false);
 
 	/**
+	 * Returns all managed entities, filtered by the given callback
+	 *
+	 * @param callback $callback
+	 *        	Callback to filter the available entities
+	 * @param boolean $groupByBundle
+	 *        	If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
+	 *        	<pre>
+	 *        	(
+	 *        	[PecPlatformBundle] => Array
+	 *        	(
+	 *        	[Pec\Bundle\PlatformBundle\Entity\User] => User
+	 *        	...
+	 *        	)
+	 *        	),
+	 *        	...
+	 *        	</pre>
+	 * @param boolean $ignoreAbstract
+	 *        	If <code>true</code> interfaces and abstract classes will be ignored
+	 * @return string[] all management entities implementing the given interface
+	 */
+	public function getEntitiesByCallback($callback, $groupByBundle = false, $ignoreAbstract = true);
+
+	/**
 	 * Fetches the bundle name from the given entity
 	 *
 	 * @param object|string $entity        	
@@ -91,7 +114,7 @@ interface DoctrineFunctionsInterface {
 	public function unproxifyFilter($object);
 
 	/**
-	 * Get the name / class of the icon to be displayed for the entity for a 
+	 * Get the name / class of the icon to be displayed for the entity for a
 	 * certain purpose.
 	 *
 	 * @param string|object $entity
