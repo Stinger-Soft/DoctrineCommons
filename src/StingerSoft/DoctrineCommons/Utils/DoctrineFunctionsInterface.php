@@ -11,6 +11,8 @@
  */
 namespace StingerSoft\DoctrineCommons\Utils;
 
+use Doctrine\DBAL\Connection;
+
 /**
  * Interface specifying common methods on entities managed by doctrine
  */
@@ -92,7 +94,7 @@ interface DoctrineFunctionsInterface {
 	/**
 	 * Fetches the bundle name from the given entity
 	 *
-	 * @param object|string $entity        	
+	 * @param object|string $entity
 	 * @return string|null
 	 */
 	public function getBundleName($entity);
@@ -101,14 +103,14 @@ interface DoctrineFunctionsInterface {
 	 * Creates a human readable name of the given entity.
 	 * If the entity implements the Labelable interface it will be used, otherwise the short classname is used
 	 *
-	 * @param string|object $entity        	
+	 * @param string|object $entity
 	 */
 	public function getHumanReadableEntityName($entity);
 
 	/**
 	 * Transforms the given doctrine proxy object into a 'real' entity
 	 *
-	 * @param object $object        	
+	 * @param object $object
 	 * @return object|NULL
 	 */
 	public function unproxifyFilter($object);
@@ -124,4 +126,20 @@ interface DoctrineFunctionsInterface {
 	 * @return string|null the icon name / class or <code>null</code>.
 	 */
 	public function getEntityIcon($entity, $purpose = null);
+
+	/**
+	 * Allows the insertion of user defined identity values
+	 *
+	 * @param Connection $connection
+	 * @param string $tableName
+	 */
+	public function allowIdentityInserts(Connection $connection, $tableName);
+
+	/**
+	 * Denies the insertion of user defined identity values
+	 *
+	 * @param Connection $connection
+	 * @param string $tableName
+	 */
+	public function denyIdentityInserts(Connection $connection, $tableName);
 }

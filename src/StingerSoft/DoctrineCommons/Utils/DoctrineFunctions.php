@@ -18,6 +18,8 @@ use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\AbstractManagerRegistry;
 use Doctrine\Common\Util\ClassUtils;
 use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\SQLServerPlatform;
 
 class DoctrineFunctions implements DoctrineFunctionsInterface {
 
@@ -48,9 +50,9 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	/**
 	 * Default constructor
 	 *
-	 * @param KernelInterface $kernel        	
-	 * @param EntityManager $em        	
-	 * @param TranslatorInterface $translator        	
+	 * @param KernelInterface $kernel
+	 * @param EntityManager $em
+	 * @param TranslatorInterface $translator
 	 */
 	public function __construct(AbstractManagerRegistry $registry, TranslatorInterface $translator, KernelInterface $kernel = null) {
 		$this->kernel = $kernel;
@@ -143,7 +145,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 				if($dummyReflection->isAbstract() || $dummyReflection->isInterface()) {
 					return $dummyReflection->getShortName();
 				}
-				$dummy = $dummyReflection->newInstance();
+				$dummy = $dummyReflection->newInstanceWithoutConstructor();
 				return $this->getHumanReadableEntityName($dummy);
 			} catch(\Exception $e) {
 				return $this->getShortClassName($entity);
@@ -231,12 +233,42 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	/**
 	 * Generates a short name from the entity FQN
 	 *
-	 * @param string $entity        	
+	 * @param string $entity
 	 * @return string
 	 */
 	protected function getShortClassName($entity) {
 		$classParts = explode('\\', $entity);
 		$class = array_pop($classParts);
 		return $class;
+	}
+
+	/**
+	 *
+	 * {@inheritdoc}
+	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::allowIdentityInserts()
+	 */
+	public function allowIdentityInserts(Connection $connection, $tableName) {
+		if($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
+			$res = $connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
+			$identity = $res->fetch(\PDO::FETCH_NUM);
+			if($identity[0]) {
+				$connection->executeUpdate("SET IDENTITY_INSERT $tableName ON;");
+			}
+		}
+	}
+
+	/**
+	 *
+	 * {@inheritdoc}
+	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::denyIdentityInserts()
+	 */
+	public function denyIdentityInserts(Connection $connection, $tableName) {
+		if($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
+			$res = $connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
+			$identity = $res->fetch(\PDO::FETCH_NUM);
+			if($identity[0]) {
+				$connection->executeUpdate("SET IDENTITY_INSERT $tableName OFF;");
+			}
+		}
 	}
 }
