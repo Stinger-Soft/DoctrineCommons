@@ -50,7 +50,7 @@ class JsonStreamImporter extends JsonImporter {
 	public function import($filename) {
 		$stream = fopen($filename, 'r');
 		try {
-			$maxEntries = null;
+			$maxEntries = 0;
 			if($this->countEntries) {
 				if($this->output) {
 					$this->output->writeln('Scanning json file...');
@@ -65,7 +65,7 @@ class JsonStreamImporter extends JsonImporter {
 				$maxEntries = $countListener->getEntryCount();
 			} else {
 				if($this->output) {
-					$this->output->writeln('skipping scanning of json file, no progress will be displayed!');
+					$this->output->writeln('skipping scanning of json file, limited progress will be displayed!');
 				}
 			}
 			$this->connection->beginTransaction();
