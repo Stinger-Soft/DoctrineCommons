@@ -39,6 +39,11 @@ class JsonImporter implements ImporterService {
 	protected $output;
 
 	/**
+	 * @var string[]
+	 */
+	protected $tableMapping = array();
+
+	/**
 	 * Default constructor
 	 *
 	 * @param Connection $connection        	
@@ -47,6 +52,10 @@ class JsonImporter implements ImporterService {
 		$this->connection = $connection;
 		$this->schemaManager = $connection->getSchemaManager();
 		$this->output = $output;
+		$tables = $this->connection->getSchemaManager()->listTables();
+		foreach($tables as $table) {
+			$this->tableMapping[] = $table->getName();
+		}
 	}
 
 	/**
@@ -60,6 +69,7 @@ class JsonImporter implements ImporterService {
 		$this->connection->beginTransaction();
 		$this->before();
 		foreach($data as $table => $tableData) {
+			$table = $this->getLocalTableName($table);
 			if(!$this->schemaManager->tablesExist(array(
 				$table 
 			))) {
@@ -101,6 +111,19 @@ class JsonImporter implements ImporterService {
 		}
 		$this->after();
 		$this->connection->commit();
+	}
+
+	protected function getLocalTableName($tableName) {
+		if(isset($this->tableMapping[$tableName])) {
+			return $tableName;
+		}
+		foreach($this->tableMapping as $item) {
+			if(strtolower($tableName) === strtolower($item)) {
+				$this->tableMapping[$tableName] = $item;
+				return $item;
+			}
+		}
+		return null;
 	}
 
 	/**
