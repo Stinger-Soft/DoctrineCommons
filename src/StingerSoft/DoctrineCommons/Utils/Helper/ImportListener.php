@@ -104,6 +104,7 @@ class ImportListener extends IdleListener {
 	 */
 	protected $tableMapping = array();
 
+
 	/**
 	 * Constructor
 	 *
@@ -201,11 +202,14 @@ class ImportListener extends IdleListener {
 				if($this->progressbar) {
 					$this->progressbar->setMessage('Scanning table ' . $tableName);
 				}
+
 				if($this->currentTable && $this->currentTable != $tableName && $this->tableExists($this->currentTable)) {
+
 					$this->jsonImporter->afterTable($this->currentTable);
 					
 					$this->currentTable = null;
 				}
+
 				if($this->tableExists($tableName)) {
 					$this->jsonImporter->beforeTable($tableName);
 				}
