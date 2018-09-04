@@ -19,13 +19,15 @@ use Doctrine\DBAL\Connection;
  */
 class JsonExporter implements ExporterInterface {
 
-	const CHUNK_SIZE = 10000;
+	const CHUNK_SIZE = 300000;
 
 	/**
 	 *
 	 * @var Connection
 	 */
 	protected $connection;
+
+	protected $listeners = array();
 
 	/**
 	 * Default constructor
@@ -48,6 +50,16 @@ class JsonExporter implements ExporterInterface {
 		fclose($handle);
 	}
 
+	public function addListener(callable $listener) {
+		$this->listeners[] = $listener;
+	}
+
+	protected function callListeners($currentTableName, $tableNum, $tableCount, $rowNum, $rowCount) {
+		foreach($this->listeners as $listener) {
+			call_user_func($listener, $currentTableName, $tableNum, $tableCount, $rowNum, $rowCount);
+		}
+	}
+
 	/**
 	 *
 	 * {@inheritdoc}
@@ -62,13 +74,25 @@ class JsonExporter implements ExporterInterface {
 
 		fwrite($resource, '{');
 		foreach($tables as $table) {
+
+			$useHackForLargeTables = false;
+			$primaryKeys = $table->getPrimaryKeyColumns();
+			$lastPrimaryKeyValue = null;
+
 			$countQuery = 'SELECT COUNT(*) as count FROM ' . $table->getName();
 			$count = (int)current($this->connection->executeQuery($countQuery)->fetch(\PDO::FETCH_ASSOC));
+
+			if($count > self::CHUNK_SIZE * 10 && \count($primaryKeys) === 1) {
+				$useHackForLargeTables = true;
+			}
 
 			$qb = $this->connection->createQueryBuilder();
 			$qb->select('*');
 			$qb->from($table->getName());
 			$qb->setMaxResults(self::CHUNK_SIZE);
+			if($useHackForLargeTables) {
+				$qb->orderBy($primaryKeys[0]);
+			}
 
 			fwrite($resource, '"' . $table->getName() . '":');
 			$delim = '';
@@ -76,17 +100,30 @@ class JsonExporter implements ExporterInterface {
 			fwrite($resource, '[');
 			$pages = ceil($count / self::CHUNK_SIZE);
 
-			for($page = 0; $page <= $pages; $page++) {
-				$qb->setFirstResult($page * self::CHUNK_SIZE);
+			for($page = 0; $page < $pages; $page++) {
+				$this->callListeners($table->getName(), $i, $len, $page * self::CHUNK_SIZE, $count);
+				if($useHackForLargeTables) {
+					if($lastPrimaryKeyValue !== null) {
+						$qb->where($primaryKeys[0] . ' > ' . $lastPrimaryKeyValue);
+					}
+				}else {
+					$qb->setFirstResult($page * self::CHUNK_SIZE);
+				}
 
 				$stmt = $qb->execute();
 				while(($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
 					fwrite($resource, $delim);
 					fwrite($resource, json_encode($row));
 					$delim = ',';
+					if($useHackForLargeTables) {
+						$lastPrimaryKeyValue = $row[$primaryKeys[0]];
+					}
 				}
 			}
 			fwrite($resource, ']');
+			if($count !== 0) {
+				$this->callListeners($table->getName(), $i, $len, $count, $count);
+			}
 
 			// if not last table
 			if($i != $len - 1) {
