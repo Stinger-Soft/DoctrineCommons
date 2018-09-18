@@ -76,7 +76,7 @@ class JsonExporter implements ExporterInterface {
 		foreach($tables as $table) {
 
 			$useHackForLargeTables = false;
-			$primaryKeys = $table->getPrimaryKeyColumns();
+			$primaryKeys = $table->hasPrimaryKey() ? $table->getPrimaryKeyColumns() : array();
 			$lastPrimaryKeyValue = null;
 
 			$countQuery = 'SELECT COUNT(*) as count FROM ' . $table->getName();

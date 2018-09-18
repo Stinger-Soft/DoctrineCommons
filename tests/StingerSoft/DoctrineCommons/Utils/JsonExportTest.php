@@ -22,6 +22,8 @@ class JsonExportTest extends \PHPUnit_Framework_TestCase {
 	
 	private $data;
 	
+	private $countQuery = true;
+	
 	public function listTables() {
 		return array(new Table('test_table'), new Table('test_table_2'));
 	}
@@ -39,7 +41,17 @@ class JsonExportTest extends \PHPUnit_Framework_TestCase {
 		return $this;
 	}
 	
+	public function setMaxResults($max) {
+	}
+	
+	public function setFirstResult($first) {
+	}
+	
 	public function fetch() {
+		if($this->countQuery) {
+			$this->countQuery = false;
+			return array(2);
+		} 
 		$result = isset($this->data[$this->currentTable][$this->rowId]) ? $this->data[$this->currentTable][$this->rowId] : false;
 		$this->rowId++;
 		return $result;
@@ -82,11 +94,17 @@ class JsonExportTest extends \PHPUnit_Framework_TestCase {
 	protected function mockConnection() {
 		$cmb = $this->getMockBuilder(Connection::class)->disableOriginalConstructor()->setMethods(array(
 			'getSchemaManager',
-			'createQueryBuilder' 
+			'createQueryBuilder',
+			'executeQuery'
 		))->getMock();
 		
 		$cmb->method('getSchemaManager')->willReturn($this);
 		$cmb->method('createQueryBuilder')->willReturn($this);
+		$that = $this;
+		$cmb->method('executeQuery')->will($this->returnCallback(function() use ($that){
+			$that->countQuery = true;
+			return $that;
+		}));
 		
 		return $cmb;
 	}
