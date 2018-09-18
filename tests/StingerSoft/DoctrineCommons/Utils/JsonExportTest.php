@@ -13,8 +13,9 @@ namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
+use PHPUnit\Framework\TestCase;
 
-class JsonExportTest extends \PHPUnit_Framework_TestCase {
+class JsonExportTest extends TestCase {
 	
 	private $currentTable = null;
 	
@@ -56,8 +57,11 @@ class JsonExportTest extends \PHPUnit_Framework_TestCase {
 		$this->rowId++;
 		return $result;
 	}
-	
-	public function __construct() {
+
+	/**
+     * @before
+	 */
+	public function setData() {
 		$this->data = array(
 			'test_table' => array(
 				0 => array(
@@ -82,8 +86,7 @@ class JsonExportTest extends \PHPUnit_Framework_TestCase {
 					'column_2' => 'data_2_1',
 					'column_3' => 'data_3_1',
 				)
-			),
-			
+			)
 		);
 	}
 

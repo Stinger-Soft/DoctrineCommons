@@ -12,8 +12,9 @@
 namespace StingerSoft\DoctrineCommons;
 
 use Symfony\Component\Translation\TranslatorInterface;
+use PHPUnit\Framework\TestCase;
 
-abstract class AbstractDatabaseTestCase extends \PHPUnit_Framework_TestCase {
+abstract class AbstractDatabaseTestCase extends TestCase {
 
 	/**
 	 * Get a list of used fixture classes
