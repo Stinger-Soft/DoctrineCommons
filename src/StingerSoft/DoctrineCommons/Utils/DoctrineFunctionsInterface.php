@@ -9,6 +9,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
@@ -28,21 +29,21 @@ interface DoctrineFunctionsInterface {
 	 * Returns the class names of all managed entities implementing the specified interface
 	 *
 	 * @param string $interface
-	 *        	The full qualified classname of the interface
+	 *            The full qualified classname of the interface
 	 * @param boolean $groupByBundle
-	 *        	If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
-	 *        	<pre>
-	 *        	(
-	 *        	[PecPlatformBundle] => Array
-	 *        	(
-	 *        	[Pec\Bundle\PlatformBundle\Entity\User] => User
-	 *        	...
-	 *        	)
-	 *        	),
-	 *        	...
-	 *        	</pre>
+	 *            If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
+	 *            <pre>
+	 *            (
+	 *            [PecPlatformBundle] => Array
+	 *            (
+	 *            [Pec\Bundle\PlatformBundle\Entity\User] => User
+	 *            ...
+	 *            )
+	 *            ),
+	 *            ...
+	 *            </pre>
 	 * @return string[] all management entities implementing the given interface
-	 *        
+	 *
 	 */
 	public function getEntitiesByInterface($interface, $groupByBundle = false);
 
@@ -50,21 +51,21 @@ interface DoctrineFunctionsInterface {
 	 * Returns the class names of all managed entities extending the specified parent class
 	 *
 	 * @param string $interface
-	 *        	The full qualified classname of the parent class
+	 *            The full qualified classname of the parent class
 	 * @param boolean $groupByBundle
-	 *        	If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
-	 *        	<pre>
-	 *        	(
-	 *        	[PecPlatformBundle] => Array
-	 *        	(
-	 *        	[Pec\Bundle\PlatformBundle\Entity\User] => User
-	 *        	...
-	 *        	)
-	 *        	),
-	 *        	...
-	 *        	</pre>
+	 *            If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
+	 *            <pre>
+	 *            (
+	 *            [PecPlatformBundle] => Array
+	 *            (
+	 *            [Pec\Bundle\PlatformBundle\Entity\User] => User
+	 *            ...
+	 *            )
+	 *            ),
+	 *            ...
+	 *            </pre>
 	 * @return string[] all management entities implementing the given parent class
-	 *        
+	 *
 	 */
 	public function getEntitiesByParent($parent, $groupByBundle = false);
 
@@ -72,21 +73,21 @@ interface DoctrineFunctionsInterface {
 	 * Returns all managed entities, filtered by the given callback
 	 *
 	 * @param callback $callback
-	 *        	Callback to filter the available entities
+	 *            Callback to filter the available entities
 	 * @param boolean $groupByBundle
-	 *        	If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
-	 *        	<pre>
-	 *        	(
-	 *        	[PecPlatformBundle] => Array
-	 *        	(
-	 *        	[Pec\Bundle\PlatformBundle\Entity\User] => User
-	 *        	...
-	 *        	)
-	 *        	),
-	 *        	...
-	 *        	</pre>
+	 *            If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
+	 *            <pre>
+	 *            (
+	 *            [PecPlatformBundle] => Array
+	 *            (
+	 *            [Pec\Bundle\PlatformBundle\Entity\User] => User
+	 *            ...
+	 *            )
+	 *            ),
+	 *            ...
+	 *            </pre>
 	 * @param boolean $ignoreAbstract
-	 *        	If <code>true</code> interfaces and abstract classes will be ignored
+	 *            If <code>true</code> interfaces and abstract classes will be ignored
 	 * @return string[] all management entities implementing the given interface
 	 */
 	public function getEntitiesByCallback($callback, $groupByBundle = false, $ignoreAbstract = true);
@@ -96,6 +97,7 @@ interface DoctrineFunctionsInterface {
 	 *
 	 * @param object|string $entity
 	 * @return string|null
+	 * @throws \ReflectionException
 	 */
 	public function getBundleName($entity);
 
@@ -120,9 +122,9 @@ interface DoctrineFunctionsInterface {
 	 * certain purpose.
 	 *
 	 * @param string|object $entity
-	 *        	the entity or class of entity to get an icon for
+	 *            the entity or class of entity to get an icon for
 	 * @param string|null $purpose
-	 *        	a purpose to get the entity for (if any) or <code>null</code>
+	 *            a purpose to get the entity for (if any) or <code>null</code>
 	 * @return string|null the icon name / class or <code>null</code>.
 	 */
 	public function getEntityIcon($entity, $purpose = null);
@@ -132,6 +134,7 @@ interface DoctrineFunctionsInterface {
 	 *
 	 * @param Connection $connection
 	 * @param string $tableName
+	 * @throws \Doctrine\DBAL\DBALException
 	 */
 	public function allowIdentityInserts(Connection $connection, $tableName);
 
@@ -140,6 +143,58 @@ interface DoctrineFunctionsInterface {
 	 *
 	 * @param Connection $connection
 	 * @param string $tableName
+	 * @throws \Doctrine\DBAL\DBALException
 	 */
 	public function denyIdentityInserts(Connection $connection, $tableName);
+
+	/**
+	 * @param Connection $connection
+	 * @param string $tableName
+	 * @param string $columnName
+	 * @throws \Doctrine\DBAL\DBALException
+	 */
+	public function dropIndex(Connection $connection, string $tableName, string $columnName): void;
+
+	/**
+	 * @param Connection $connection
+	 * @param string $tableName
+	 * @param string $indexName
+	 * @throws \Doctrine\DBAL\DBALException
+	 */
+	public function dropIndexByName(Connection $connection, string $tableName, string $indexName): void;
+
+	/**
+	 * @param Connection $connection
+	 * @param string $tableName
+	 * @param string $indexName
+	 * @return bool
+	 * @throws \Doctrine\DBAL\DBALException
+	 */
+	public function hasIndex(Connection $connection, string $tableName, string $indexName): bool;
+
+	/**
+	 * @param Connection $connection
+	 * @param string $tableName
+	 * @param string $columnName
+	 * @return bool
+	 * @throws \Doctrine\DBAL\DBALException
+	 */
+	public function hasForeignKey(Connection $connection, string $tableName, string $columnName): bool;
+
+	/**
+	 * @param Connection $connection
+	 * @param string $tableName
+	 * @param string $columnName
+	 * @throws \Doctrine\DBAL\DBALException
+	 */
+	public function dropForeignKey(Connection $connection, string $tableName, string $columnName): void;
+
+	/**
+	 * @param Connection $connection
+	 * @param string $tableName
+	 * @param string $keyName
+	 * @throws \Doctrine\DBAL\DBALException
+	 */
+	public function dropForeignKeyByName(Connection $connection, string $tableName, string $keyName): void;
+
 }
