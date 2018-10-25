@@ -330,7 +330,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	public function hasForeignKey(Connection $connection, string $tableName, string $columnName): bool {
 		$platform = $connection->getDatabasePlatform();
 		if($platform instanceof MySqlPlatform) {
-			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName'";
+			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '".$connection->getDatabase()."' AND  TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
 			return count($foreignKeyStmt->fetchAll()) > 0;
 		}
@@ -350,7 +350,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	public function dropForeignKey(Connection $connection, string $tableName, string $columnName): void {
 		$platform = $connection->getDatabasePlatform();
 		if($platform instanceof MySqlPlatform) {
-			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName'";
+			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '".$connection->getDatabase()."' AND TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
 			foreach($foreignKeyStmt->fetchAll() as $index) {
 				$this->dropForeignKeyByName($connection, $index['TABLE_NAME'], $index['CONSTRAINT_NAME']);
