@@ -46,8 +46,9 @@ class JsonExporter implements ExporterInterface {
 	 */
 	public function exportToFilename($filename) {
 		$handle = fopen($filename, 'w');
-		$this->export($handle);
+		$rows = $this->export($handle);
 		fclose($handle);
+		return $rows;
 	}
 
 	public function addListener(callable $listener) {
@@ -71,6 +72,7 @@ class JsonExporter implements ExporterInterface {
 
 		$i = 0;
 		$len = count($tables);
+		$totalRows = 0;
 
 		fwrite($resource, '{');
 		foreach($tables as $table) {
@@ -81,6 +83,7 @@ class JsonExporter implements ExporterInterface {
 
 			$countQuery = 'SELECT COUNT(*) as count FROM ' . $table->getName();
 			$count = (int)current($this->connection->executeQuery($countQuery)->fetch(\PDO::FETCH_ASSOC));
+			$totalRows += $count;
 
 			if($count > self::CHUNK_SIZE * 10 && \count($primaryKeys) === 1) {
 				$useHackForLargeTables = true;
@@ -136,5 +139,6 @@ class JsonExporter implements ExporterInterface {
 		}
 
 		fwrite($resource, '}');
+		return $totalRows;
 	}
 }
