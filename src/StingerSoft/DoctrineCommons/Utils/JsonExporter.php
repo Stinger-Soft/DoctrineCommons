@@ -112,6 +112,9 @@ class JsonExporter implements ExporterInterface {
 
 				$stmt = $qb->execute();
 				while(($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+					if(isset($row['doctrine_rownum'])) {
+						unset($row['doctrine_rownum']);
+					}
 					fwrite($resource, $delim);
 					fwrite($resource, json_encode($row));
 					$delim = ',';

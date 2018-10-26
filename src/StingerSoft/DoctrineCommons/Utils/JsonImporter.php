@@ -94,6 +94,9 @@ class JsonImporter implements ImporterService {
 				$qb = $this->connection->createQueryBuilder();
 				$qb->insert($table);
 				foreach($tableRow as $field => $value) {
+					if($field === 'doctrine_rownum') {
+						continue;
+					}
 					$qb->setValue($field, ':' . $field);
 					$qb->setParameter(':' . $field, $value);
 				}

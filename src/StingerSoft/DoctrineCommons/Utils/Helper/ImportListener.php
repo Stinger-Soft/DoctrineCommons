@@ -236,6 +236,9 @@ class ImportListener extends IdleListener {
 	 */
 	public function value($value) {
 		if($this->tableExists($this->currentTable)) {
+			if($$this->currentField === 'doctrine_rownum') {
+				continue;
+			}
 			$this->currentTableQuery->setParameter(':' . $this->currentField, $value);
 		}
 	}
