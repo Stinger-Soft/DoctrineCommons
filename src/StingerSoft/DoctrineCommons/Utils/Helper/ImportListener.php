@@ -222,6 +222,9 @@ class ImportListener extends IdleListener {
 						$this->currentTableQuery->insert($this->currentTable);
 					}
 					$this->currentField = $key;
+					if($this->currentField === 'doctrine_rownum') {
+						return;
+					}
 					$this->currentTableQuery->setValue($key, ':' . $key);
 				}
 				break;
@@ -236,7 +239,7 @@ class ImportListener extends IdleListener {
 	 */
 	public function value($value) {
 		if($this->tableExists($this->currentTable)) {
-			if($$this->currentField === 'doctrine_rownum') {
+			if($this->currentField === 'doctrine_rownum') {
 				return;
 			}
 			$this->currentTableQuery->setParameter(':' . $this->currentField, $value);
