@@ -61,9 +61,9 @@ class ImportListener extends IdleListener {
 
 	/**
 	 *
-	 * @var \Doctrine\DBAL\Query\QueryBuilder
+	 * @var array
 	 */
-	protected $currentTableQuery = null;
+	protected $rowData = null;
 
 	/**
 	 * The console output channel
@@ -182,8 +182,8 @@ class ImportListener extends IdleListener {
 				$this->progressbar->advance();
 			}
 			if($this->tableExists($this->currentTable)) {
-				$this->currentTableQuery->execute();
-				$this->currentTableQuery = null;
+				$this->jsonImporter->insert($this->currentTable, $this->rowData);
+				$this->rowData = null;
 			}
 		}
 		$this->level--;
@@ -217,15 +217,13 @@ class ImportListener extends IdleListener {
 				break;
 			case 2:
 				if($this->tableExists($this->currentTable)) {
-					if(!$this->currentTableQuery) {
-						$this->currentTableQuery = $this->connection->createQueryBuilder();
-						$this->currentTableQuery->insert($this->currentTable);
+					if(!$this->rowData === null) {
+						$this->rowData = [];
 					}
 					$this->currentField = $key;
 					if($this->currentField === 'doctrine_rownum') {
 						return;
 					}
-					$this->currentTableQuery->setValue($key, ':' . $key);
 				}
 				break;
 		}
@@ -242,7 +240,7 @@ class ImportListener extends IdleListener {
 			if($this->currentField === 'doctrine_rownum') {
 				return;
 			}
-			$this->currentTableQuery->setParameter(':' . $this->currentField, $value);
+			$this->rowData[$this->currentField] = $value;
 		}
 	}
 
