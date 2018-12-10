@@ -68,7 +68,10 @@ class MultipleInsert {
 			}
 		}
 		try {
-			$this->connection->executeUpdate(\trim($sql), $this->values, $this->types);
+			$sql = \trim($sql);
+			if(!empty($sql)) {
+				$this->connection->executeUpdate($sql, $this->values, $this->types);
+			}
 		} finally {
 			$this->inserts = [];
 			$this->values = [];

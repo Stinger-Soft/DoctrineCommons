@@ -136,6 +136,8 @@ class JsonImporter implements ImporterService {
 	 */
 	public function beforeTable($tableName) {
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
+			$this->multipleInsert->execute();
+			$this->multipleInsertCounter = 0;
 			$res = $this->connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
 			$identity = $res->fetch(\PDO::FETCH_NUM);
 			if($identity[0]) {
@@ -152,6 +154,8 @@ class JsonImporter implements ImporterService {
 	 */
 	public function afterTable($tableName) {
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
+			$this->multipleInsert->execute();
+			$this->multipleInsertCounter = 0;
 			$res = $this->connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
 			$identity = $res->fetch(\PDO::FETCH_NUM);
 			if($identity[0]) {
