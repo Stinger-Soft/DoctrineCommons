@@ -12,9 +12,6 @@ matrix:
     - php: 5.6
       env: COVERALLS=1
 
-    - php: hhvm
-      env: COVERALLS=0
-
 before_install:
   - composer self-update
 
