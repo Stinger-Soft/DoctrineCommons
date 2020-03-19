@@ -9,6 +9,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Utils;
 
 /**
@@ -19,7 +20,7 @@ interface ImporterService {
 	/**
 	 * Imports the data from the given file
 	 *
-	 * @param string $filename        	
+	 * @param string $filename
 	 */
-	public function import($filename);
+	public function import(string $filename): void;
 }

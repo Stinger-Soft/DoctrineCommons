@@ -1,51 +1,53 @@
 {
-	"name" : "stinger-soft/doctrine-commons",
-	"type" : "library",
-	"description" : "Helper functions and DQL Extensions for Doctrine",
-	"keywords" : [
-		"Doctrine",
-		"Commons"
-	],
-	"homepage" : "http://www.stinger-soft.net",
-	"authors" : [{
-			"name" : "Florian Meyer",
-			"email" : "florian.meyer@stinger-soft.net",
-			"role" : "Developer"
-		}
-	],
-	"autoload" : {
-		"psr-4" : {
-			"StingerSoft\\DoctrineCommons\\" : "src/StingerSoft/DoctrineCommons"
-		},
-		"exclude-from-classmap" : [
-			"/tests/"
-		]
-	},
-	"autoload-dev" : {
-		"psr-4" : {
-			"StingerSoft\\DoctrineCommons\\" : "tests/StingerSoft/DoctrineCommons",
-			"StingerSoft\\TestBundle\\" : "tests/StingerSoft/TestBundle"
-		}
-	},
-	"license" : "Apache-2.0",
-	"require" : {
-		"php" : ">=7.2",
-		"ext-pdo": "*",
-		"doctrine/orm" : ">=2.5.0",
-		"doctrine/common" : ">=2.5.0",
-		"salsify/json-streaming-parser" : "^8.0",
-		"symfony/translation" : "^3.0|^4.0",
-		"symfony/http-kernel" : "^3.0|^4.0"
+  "name": "stinger-soft/doctrine-commons",
+  "type": "library",
+  "description": "Helper functions and DQL Extensions for Doctrine",
+  "keywords": [
+    "Doctrine",
+    "Commons"
+  ],
+  "homepage": "http://www.stinger-soft.net",
+  "authors": [
+    {
+      "name": "Florian Meyer",
+      "email": "florian.meyer@stinger-soft.net",
+      "role": "Developer"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "StingerSoft\\DoctrineCommons\\": "src/StingerSoft/DoctrineCommons"
     },
-	"require-dev" : {
-		"phpunit/phpunit" : "~7.3.5",
-		"php-coveralls/php-coveralls" : "~2.1.0",
-		"stof/doctrine-extensions-bundle" : "~1.3"
-	},
-	"extra" : {
-		"branch-alias" : {
-			"dev-master" : "0.1.x-dev",
-			"dev-develop" : "1.0.x-dev"
-		}
-	}
+    "exclude-from-classmap": [
+      "/tests/"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "StingerSoft\\DoctrineCommons\\": "tests/StingerSoft/DoctrineCommons",
+      "StingerSoft\\TestBundle\\": "tests/StingerSoft/TestBundle"
+    }
+  },
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=7.2",
+    "ext-pdo": "*",
+    "doctrine/orm": ">=2.5.0",
+    "doctrine/common": ">=2.5.0",
+    "salsify/json-streaming-parser": "^8.0",
+    "symfony/translation": "^3.0|^4.0",
+    "symfony/http-kernel": "^3.0|^4.0",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~7.3.5",
+    "php-coveralls/php-coveralls": "~2.1.0",
+    "stof/doctrine-extensions-bundle": "~1.3"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "0.1.x-dev",
+      "dev-develop": "1.0.x-dev"
+    }
+  }
 }

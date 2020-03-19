@@ -13,16 +13,21 @@
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ConnectionException;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
+use PDO;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
+use function count;
 
 class JsonImporter implements ImporterService {
 
-	protected const BATCH_INSERT_CHUNK_SIZE = 500;
-	protected const MULTIPLE_INSERT_CHUNK_SIZE = 2000;
+	protected const BATCH_INSERT_CHUNK_SIZE = 100;
+	protected const MULTIPLE_INSERT_CHUNK_SIZE = 200;
 	/**
 	 *
 	 * @var Connection
@@ -30,7 +35,7 @@ class JsonImporter implements ImporterService {
 	protected $connection;
 	/**
 	 *
-	 * @var \Doctrine\DBAL\Schema\AbstractSchemaManager
+	 * @var AbstractSchemaManager
 	 */
 	protected $schemaManager;
 	/**
@@ -59,6 +64,7 @@ class JsonImporter implements ImporterService {
 	 * Default constructor
 	 *
 	 * @param Connection $connection
+	 * @param OutputInterface|null $output
 	 */
 	public function __construct(Connection $connection, OutputInterface $output = null) {
 		$this->connection = $connection;
@@ -75,9 +81,10 @@ class JsonImporter implements ImporterService {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws DBALException
 	 * @see \StingerSoft\DoctrineCommons\Utils\ImporterService::import()
 	 */
-	public function import($filename) {
+	public function import(string $filename): void {
 		$data = json_decode(file_get_contents($filename), true);
 		$this->connection->beginTransaction();
 		$this->before();
@@ -109,6 +116,7 @@ class JsonImporter implements ImporterService {
 				}
 				$this->insert($table, $tableRow);
 
+				/** @noinspection DisconnectedForeachInstructionInspection */
 				if($progressbar) {
 					$progressbar->advance();
 				}
@@ -133,13 +141,14 @@ class JsonImporter implements ImporterService {
 	 *
 	 * @param string $tableName
 	 *            The name of the table to be filled with data
+	 * @throws DBALException
 	 */
-	public function beforeTable($tableName) {
+	public function beforeTable(string $tableName): void {
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$this->multipleInsert->execute();
 			$this->multipleInsertCounter = 0;
 			$res = $this->connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(\PDO::FETCH_NUM);
+			$identity = $res->fetch(PDO::FETCH_NUM);
 			if($identity[0]) {
 				$this->connection->executeUpdate("SET IDENTITY_INSERT $tableName ON;");
 			}
@@ -151,27 +160,35 @@ class JsonImporter implements ImporterService {
 	 *
 	 * @param string $tableName
 	 *            The name of the table to be filled with data
+	 * @throws DBALException
 	 */
-	public function afterTable($tableName) {
+	public function afterTable(string $tableName): void {
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$this->multipleInsert->execute();
 			$this->multipleInsertCounter = 0;
 			$res = $this->connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(\PDO::FETCH_NUM);
+			$identity = $res->fetch(PDO::FETCH_NUM);
 			if($identity[0]) {
 				$this->connection->executeUpdate("SET IDENTITY_INSERT $tableName OFF;");
 			}
 		}
 	}
 
-	public function insert($tableExpression, array $data, array $types = []): void {
-		$this->multipleInsertCounter += \count($data);
+	/**
+	 * @param string $tableExpression
+	 * @param array $data
+	 * @param array $types
+	 * @throws ConnectionException
+	 * @throws DBALException
+	 */
+	public function insert(string $tableExpression, array $data, array $types = []): void {
+		$this->multipleInsertCounter += count($data);
 		if($this->multipleInsertCounter > self::MULTIPLE_INSERT_CHUNK_SIZE) {
 			$this->multipleInsert->execute();
 			$this->multipleInsertCounter = 0;
 		}
 		$this->multipleInsert->addInsert($tableExpression, $data, $types);
-		$this->multipleInsertCounter += \count($data);
+		$this->multipleInsertCounter += count($data);
 
 		if(++$this->statementCounter % self::BATCH_INSERT_CHUNK_SIZE === 0 && $this->connection->isTransactionActive()) {
 			$this->connection->commit();
@@ -179,7 +196,11 @@ class JsonImporter implements ImporterService {
 		}
 	}
 
-	protected function getLocalTableName($tableName) {
+	/**
+	 * @param string $tableName
+	 * @return string|null
+	 */
+	protected function getLocalTableName(string $tableName): ?string {
 		if(isset($this->tableMapping[$tableName])) {
 			return $tableName;
 		}
@@ -194,8 +215,9 @@ class JsonImporter implements ImporterService {
 
 	/**
 	 * Executed before the import is started
+	 * @throws DBALException
 	 */
-	protected function before() {
+	protected function before(): void {
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$this->connection->executeUpdate('EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"');
 		} else if($this->connection->getDatabasePlatform() instanceof MySqlPlatform) {
@@ -207,8 +229,9 @@ class JsonImporter implements ImporterService {
 
 	/**
 	 * Executed after the import is finished
+	 * @throws DBALException
 	 */
-	protected function after() {
+	protected function after(): void {
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$this->connection->executeUpdate('exec sp_msforeachtable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"');
 		} else if($this->connection->getDatabasePlatform() instanceof MySqlPlatform) {

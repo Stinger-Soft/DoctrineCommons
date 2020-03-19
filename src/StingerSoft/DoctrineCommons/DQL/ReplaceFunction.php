@@ -11,33 +11,41 @@
 
 namespace StingerSoft\DoctrineCommons\DQL;
 
+use Doctrine\ORM\Query\AST\ASTException;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
+use Doctrine\ORM\Query\AST\Node;
+use Doctrine\ORM\Query\AST\PathExpression;
 use Doctrine\ORM\Query\Lexer;
+use Doctrine\ORM\Query\Parser;
+use Doctrine\ORM\Query\QueryException;
+use Doctrine\ORM\Query\SqlWalker;
 
 class ReplaceFunction extends FunctionNode {
 
 	public const IDENTIFIER = 'REPLACE';
 
-	/** @var \Doctrine\ORM\Query\AST\PathExpression|\Doctrine\ORM\Query\AST\Node */
+	/** @var PathExpression|Node */
 	protected $stringFirst;
-	/** @var \Doctrine\ORM\Query\AST\PathExpression|\Doctrine\ORM\Query\AST\Node */
+	/** @var PathExpression|Node */
 	protected $stringSecond;
-	/** @var \Doctrine\ORM\Query\AST\PathExpression|\Doctrine\ORM\Query\AST\Node */
+	/** @var PathExpression|Node */
 	protected $stringThird;
 
 	/**
 	 * {@inheritdoc}
+	 * @throws ASTException
 	 */
-	public function getSql(\Doctrine\ORM\Query\SqlWalker $sqlWalker) {
+	public function getSql(SqlWalker $sqlWalker) {
 		return self::IDENTIFIER . '(' . $this->stringFirst->dispatch($sqlWalker) . ','
-			. $this->stringSecond->dispatch($sqlWalker) . ','
+			. $this->stringSecond->disspatch($sqlWalker) . ','
 			. $this->stringThird->dispatch($sqlWalker) . ')';
 	}
 
 	/**
 	 * {@inheritdoc}
+	 * @throws QueryException
 	 */
-	public function parse(\Doctrine\ORM\Query\Parser $parser) {
+	public function parse(Parser $parser) {
 		$parser->match(Lexer::T_IDENTIFIER);
 		$parser->match(Lexer::T_OPEN_PARENTHESIS);
 		$this->stringFirst = $parser->StringPrimary();

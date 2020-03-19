@@ -1,4 +1,5 @@
-<?php /** @noinspection SqlDialectInspection */
+<?php /** @noinspection SqlNoDataSourceInspection */
+/** @noinspection SqlDialectInspection */
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -19,8 +20,17 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\ORM\Proxy\Proxy;
+use Exception;
+use InvalidArgumentException;
+use LogicException;
+use PDO;
+use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use function call_user_func;
+use function get_class;
+use function is_object;
 
 class DoctrineFunctions implements DoctrineFunctionsInterface {
 
@@ -65,10 +75,11 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws ReflectionException
 	 * @see \DoctrineFunctionsInterface::getEntitiesByInterface()
 	 */
-	public function getEntitiesByInterface($interface, $groupByBundle = false) {
-		return $this->getEntitiesByCallback(function(\ReflectionClass $rc) use ($interface) {
+	public function getEntitiesByInterface(string $interface, bool $groupByBundle = false): array {
+		return $this->getEntitiesByCallback(static function(ReflectionClass $rc) use ($interface) {
 			return array_key_exists($interface, $rc->getInterfaces());
 		}, $groupByBundle);
 	}
@@ -77,10 +88,11 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws ReflectionException
 	 * @see DoctrineFunctionsInterface::getEntitiesByParent()
 	 */
-	public function getEntitiesByParent($parent, $groupByBundle = false) {
-		return $this->getEntitiesByCallback(function(\ReflectionClass $rc) use ($parent) {
+	public function getEntitiesByParent(string $parent, bool $groupByBundle = false): array {
+		return $this->getEntitiesByCallback(static function(ReflectionClass $rc) use ($parent) {
 			return $rc->isSubclassOf($parent);
 		}, $groupByBundle);
 	}
@@ -89,9 +101,10 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws ReflectionException
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::getEntitiesByCallback()
 	 */
-	public function getEntitiesByCallback($callback, $groupByBundle = false, $ignoreAbstract = true) {
+	public function getEntitiesByCallback($callback, bool $groupByBundle = false, bool $ignoreAbstract = true): array {
 		$entities = array();
 		foreach($this->getAllMetadata() as $m) {
 			if($ignoreAbstract && ($m->getReflectionClass()->isAbstract() || $m->getReflectionClass()->isInterface())) {
@@ -118,7 +131,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * @see \DoctrineFunctionsInterface::getHumanReadableEntityName()
 	 */
-	public function getHumanReadableEntityName($entity) {
+	public function getHumanReadableEntityName($entity): ?string {
 		if(is_object($entity)) {
 			if(method_exists($entity, 'getEntityLabel') && method_exists($entity, 'getEntityLabelTranslationDomain')) {
 				return $this->translator->trans(call_user_func(array(
@@ -133,22 +146,22 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 		}
 		if(is_string($entity)) {
 			if(method_exists($entity, 'getClassLabel') && method_exists($entity, 'getClassLabelTranslationDomain')) {
-				return $this->translator->trans(\call_user_func(array(
+				return $this->translator->trans(call_user_func(array(
 					$entity,
 					'getClassLabel'
-				)), array(), \call_user_func(array(
+				)), array(), call_user_func(array(
 					$entity,
 					'getClassLabelTranslationDomain'
 				)));
 			}
 			try {
-				$dummyReflection = new \ReflectionClass($entity);
+				$dummyReflection = new ReflectionClass($entity);
 				if($dummyReflection->isAbstract() || $dummyReflection->isInterface()) {
 					return $dummyReflection->getShortName();
 				}
 				$dummy = $dummyReflection->newInstanceWithoutConstructor();
 				return $this->getHumanReadableEntityName($dummy);
-			} catch(\Exception $e) {
+			} catch(Exception $e) {
 				return $this->getShortClassName($entity);
 			}
 		}
@@ -163,17 +176,17 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \DoctrineFunctionsInterface::getBundleName()
 	 *
 	 */
-	public function getBundleName($entity) {
+	public function getBundleName($entity): ?string {
 		if(!$this->kernel) {
-			throw new \InvalidArgumentException('You must construct this class with a valid kernel!');
+			throw new InvalidArgumentException('You must construct this class with a valid kernel!');
 		}
 		$bundles = $this->kernel->getBundles();
-		if(\is_object($entity)) {
-			$entity = \get_class($entity);
+		if(is_object($entity)) {
+			$entity = get_class($entity);
 		}
 		$dataBaseNamespace = substr($entity, 0, strpos($entity, '\\Entity\\'));
 		foreach($bundles as $type => $bundle) {
-			$bundleRefClass = new \ReflectionClass($bundle);
+			$bundleRefClass = new ReflectionClass($bundle);
 			if($bundleRefClass->getNamespaceName() === $dataBaseNamespace) {
 				return $type;
 			}
@@ -189,16 +202,21 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function unproxifyFilter($object) {
 		try {
-			if(!is_object($object))
+			if(!is_object($object)) {
 				return null;
-			if(!($object instanceof Proxy))
+			}
+			if(!($object instanceof Proxy)) {
 				return $object;
+			}
 
 			$class = ClassUtils::getClass($object);
 			$em = $this->registry->getManagerForClass($class);
+			if($em === null) {
+				return null;
+			}
 			$em->detach($object);
 			return $em->find($class, $object->getId());
-		} catch(\Exception $e) {
+		} catch(Exception $e) {
 			return null;
 		}
 	}
@@ -209,7 +227,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::getEntityIcon()
 	 */
-	public function getEntityIcon($entity, $purpose = null) {
+	public function getEntityIcon($entity, ?string $purpose = null): ?string {
 		if(method_exists($entity, 'getEntityIcon')) {
 			return call_user_func(array(
 				$entity,
@@ -224,15 +242,15 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * {@inheritdoc}
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::allowIdentityInserts()
 	 */
-	public function allowIdentityInserts(Connection $connection, $tableName) {
+	public function allowIdentityInserts(Connection $connection, string $tableName): void {
 		if($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$res = $connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(\PDO::FETCH_NUM);
+			$identity = $res->fetch(PDO::FETCH_NUM);
 			if($identity[0]) {
 				$connection->executeUpdate("SET IDENTITY_INSERT $tableName ON;");
 			}
 		} else {
-			throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+			throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 		}
 	}
 
@@ -241,15 +259,15 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * {@inheritdoc}
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::denyIdentityInserts()
 	 */
-	public function denyIdentityInserts(Connection $connection, $tableName) {
+	public function denyIdentityInserts(Connection $connection, string $tableName): void {
 		if($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$res = $connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(\PDO::FETCH_NUM);
+			$identity = $res->fetch(PDO::FETCH_NUM);
 			if($identity[0]) {
 				$connection->executeUpdate("SET IDENTITY_INSERT $tableName OFF;");
 			}
 		} else {
-			throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+			throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 		}
 	}
 
@@ -287,7 +305,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 				$this->dropIndexByName($connection, $index['Table'], $index['Key_name']);
 			}
 		} else {
-			throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+			throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 		}
 	}
 
@@ -305,7 +323,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 		} else if($platform instanceof MySqlPlatform) {
 			$connection->executeQuery('ALTER TABLE ' . $tableName . ' DROP INDEX ' . $indexName);
 		} else {
-			throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+			throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 		}
 	}
 
@@ -317,9 +335,9 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	public function hasIndex(Connection $connection, string $tableName, string $indexName): bool {
 		$platform = $connection->getDatabasePlatform();
 		if($platform instanceof SQLServerPlatform) {
-			return $connection->executeQuery("SELECT COUNT(*) FROM sys.indexes WHERE name='" . $indexName . "' AND object_id = OBJECT_ID('" . $tableName . "')")->fetch(\PDO::FETCH_COLUMN) > 0;
+			return $connection->executeQuery("SELECT COUNT(*) FROM sys.indexes WHERE name='" . $indexName . "' AND object_id = OBJECT_ID('" . $tableName . "')")->fetch(PDO::FETCH_COLUMN) > 0;
 		}
-		throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+		throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 	}
 
 	/**
@@ -330,7 +348,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	public function hasForeignKey(Connection $connection, string $tableName, string $columnName): bool {
 		$platform = $connection->getDatabasePlatform();
 		if($platform instanceof MySqlPlatform) {
-			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '".$connection->getDatabase()."' AND  TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
+			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '" . $connection->getDatabase() . "' AND  TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
 			return count($foreignKeyStmt->fetchAll()) > 0;
 		}
@@ -339,7 +357,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
 			return count($foreignKeyStmt->fetchAll()) > 0;
 		}
-		throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+		throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 	}
 
 	/**
@@ -350,7 +368,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	public function dropForeignKey(Connection $connection, string $tableName, string $columnName): void {
 		$platform = $connection->getDatabasePlatform();
 		if($platform instanceof MySqlPlatform) {
-			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '".$connection->getDatabase()."' AND TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
+			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '" . $connection->getDatabase() . "' AND TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
 			foreach($foreignKeyStmt->fetchAll() as $index) {
 				$this->dropForeignKeyByName($connection, $index['TABLE_NAME'], $index['CONSTRAINT_NAME']);
@@ -365,7 +383,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			}
 			return;
 		}
-		throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+		throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 	}
 
 	/**
@@ -383,15 +401,16 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			$connection->executeQuery('ALTER TABLE ' . $tableName . ' DROP CONSTRAINT ' . $keyName);
 			return;
 		}
-		throw new \LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
+		throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 	}
 
 	/**
 	 * Returns all management class metadata
 	 *
+	 * @param string|null $managerName
 	 * @return ClassMetadata[]
 	 */
-	protected function getAllMetadata($managerName = null) {
+	protected function getAllMetadata(string $managerName = null): array {
 		if(!$this->allMetadata) {
 			$this->allMetadata = $this->registry->getManager($managerName)->getMetadataFactory()->getAllMetadata();
 		}
@@ -404,7 +423,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @param string $entity
 	 * @return string
 	 */
-	protected function getShortClassName($entity) {
+	protected function getShortClassName(string $entity): string {
 		$classParts = explode('\\', $entity);
 		return array_pop($classParts);
 	}

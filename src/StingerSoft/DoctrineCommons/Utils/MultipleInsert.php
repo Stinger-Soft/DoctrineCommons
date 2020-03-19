@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
+use PDO;
+use function trim;
 
 /**
  * Class MultipleInsert
@@ -49,12 +52,12 @@ class MultipleInsert {
 		];
 		foreach($data as $key => $value) {
 			$this->values[] = $value;
-			$this->types[] = $types[$key] ?? \PDO::PARAM_STR;
+			$this->types[] = $types[$key] ?? PDO::PARAM_STR;
 		}
 	}
 
 	/**
-	 * @throws \Doctrine\DBAL\DBALException
+	 * @throws DBALException
 	 */
 	public function execute(): void {
 		$sql = '';
@@ -68,7 +71,7 @@ class MultipleInsert {
 			}
 		}
 		try {
-			$sql = \trim($sql);
+			$sql = trim($sql);
 			if(!empty($sql)) {
 				$this->connection->executeUpdate($sql, $this->values, $this->types);
 			}

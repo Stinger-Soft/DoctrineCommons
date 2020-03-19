@@ -11,8 +11,8 @@
  */
 namespace StingerSoft\DoctrineCommons;
 
-use Symfony\Component\Translation\TranslatorInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 abstract class AbstractDatabaseTestCase extends TestCase {
 

@@ -9,9 +9,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Utils\Helper;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ConnectionException;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use JsonStreamingParser\Listener\IdleListener;
 use StingerSoft\DoctrineCommons\Utils\JsonImporter;
@@ -39,13 +42,13 @@ class ImportListener extends IdleListener {
 	 *
 	 * @var string
 	 */
-	protected $currentTable = null;
+	protected $currentTable;
 
 	/**
 	 *
 	 * @var string
 	 */
-	protected $currentField = null;
+	protected $currentField;
 
 	/**
 	 *
@@ -63,7 +66,7 @@ class ImportListener extends IdleListener {
 	 *
 	 * @var array
 	 */
-	protected $rowData = null;
+	protected $rowData;
 
 	/**
 	 * The console output channel
@@ -108,20 +111,20 @@ class ImportListener extends IdleListener {
 	/**
 	 * Constructor
 	 *
-	 * @param JsonImporter          $jsonImporter
-	 *        	The importer using this listener
-	 * @param OutputInterface       $output
-	 *        	The console output channel
+	 * @param JsonImporter $jsonImporter
+	 *            The importer using this listener
+	 * @param OutputInterface $output
+	 *            The console output channel
 	 * @param AbstractSchemaManager $schemaManager
-	 *        	The schema manager to check if a table exists
-	 * @param Connection            $connection
-	 *        	The database connection
-	 * @param int                   $maxEntries
-	 *        	The maximum amount of entries which should be imported
+	 *            The schema manager to check if a table exists
+	 * @param Connection $connection
+	 *            The database connection
+	 * @param int $maxEntries
+	 *            The maximum amount of entries which should be imported
 	 */
 	public function __construct(JsonImporter $jsonImporter, AbstractSchemaManager $schemaManager, Connection $connection, $maxEntries = null, OutputInterface $output = null) {
 		$this->output = $output;
-		if($this->output != null && $maxEntries !== null) {
+		if($this->output !== null && $maxEntries !== null) {
 			$this->progressbar = new ProgressBar($output, $maxEntries);
 		}
 		$this->connection = $connection;
@@ -139,7 +142,7 @@ class ImportListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::startDocument()
 	 */
-	public function startDocument() {
+	public function startDocument(): void {
 		if($this->progressbar) {
 			$this->progressbar->setMessage('Starting import');
 			$this->progressbar->start();
@@ -153,7 +156,7 @@ class ImportListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::endDocument()
 	 */
-	public function endDocument() {
+	public function endDocument(): void {
 		if($this->progressbar) {
 			$this->progressbar->setMessage('Task is finished');
 			$this->progressbar->finish();
@@ -166,7 +169,7 @@ class ImportListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::startObject()
 	 */
-	public function startObject() {
+	public function startObject(): void {
 		$this->level++;
 	}
 
@@ -174,10 +177,12 @@ class ImportListener extends IdleListener {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws ConnectionException
+	 * @throws DBALException
 	 * @see \JsonStreamingParser\Listener\IdleListener::endObject()
 	 */
-	public function endObject() {
-		if($this->level == 2) {
+	public function endObject(): void {
+		if($this->level === 2) {
 			if($this->progressbar) {
 				$this->progressbar->advance();
 			}
@@ -193,9 +198,10 @@ class ImportListener extends IdleListener {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws DBALException
 	 * @see \JsonStreamingParser\Listener\IdleListener::key()
 	 */
-	public function key($key) {
+	public function key($key): void {
 		switch($this->level) {
 			case 1:
 				$tableName = $this->getLocalTableName($key);
@@ -203,10 +209,10 @@ class ImportListener extends IdleListener {
 					$this->progressbar->setMessage('Scanning table ' . $tableName);
 				}
 
-				if($this->currentTable && $this->currentTable != $tableName && $this->tableExists($this->currentTable)) {
+				if($this->currentTable && $this->currentTable !== $tableName && $this->tableExists($this->currentTable)) {
 
 					$this->jsonImporter->afterTable($this->currentTable);
-					
+
 					$this->currentTable = null;
 				}
 
@@ -217,7 +223,7 @@ class ImportListener extends IdleListener {
 				break;
 			case 2:
 				if($this->tableExists($this->currentTable)) {
-					if(!$this->rowData === null) {
+					if($this->rowData === null) {
 						$this->rowData = [];
 					}
 					$this->currentField = $key;
@@ -235,7 +241,7 @@ class ImportListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::value()
 	 */
-	public function value($value) {
+	public function value($value): void {
 		if($this->tableExists($this->currentTable)) {
 			if($this->currentField === 'doctrine_rownum') {
 				return;
@@ -248,23 +254,25 @@ class ImportListener extends IdleListener {
 	 * Checks if the given table exists
 	 *
 	 * @param string $tableName
-	 *        	The table name to check
+	 *            The table name to check
 	 * @return boolean Returns true if the table exists, otherwise false
 	 */
 	/**
 	 * Checks if the given table exists
 	 *
 	 * @param string $tableName
-	 *        	The table name to check
+	 *            The table name to check
 	 * @return boolean Returns true if the table exists, otherwise false
 	 */
-	protected function tableExists($tableName) {
-		if(isset($this->nonExistingTables[$tableName]))
+	protected function tableExists($tableName): bool {
+		if(isset($this->nonExistingTables[$tableName])) {
 			return false;
-		if(isset($this->existingTables[$tableName]))
+		}
+		if(isset($this->existingTables[$tableName])) {
 			return true;
+		}
 		$exists = $this->schemaManager->tablesExist(array(
-			$tableName 
+			$tableName
 		));
 		if(!$exists) {
 			$this->nonExistingTables[$tableName] = 1;
