@@ -37,7 +37,7 @@ class ReplaceFunction extends FunctionNode {
 	 */
 	public function getSql(SqlWalker $sqlWalker) {
 		return self::IDENTIFIER . '(' . $this->stringFirst->dispatch($sqlWalker) . ','
-			. $this->stringSecond->disspatch($sqlWalker) . ','
+			. $this->stringSecond->dispatch($sqlWalker) . ','
 			. $this->stringThird->dispatch($sqlWalker) . ')';
 	}
 
