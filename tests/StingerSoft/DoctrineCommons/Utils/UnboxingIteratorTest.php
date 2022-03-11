@@ -51,11 +51,11 @@ class UnboxingIteratorTest extends TestCase {
 	/**
 	 * Where lightning strikes once, a ninja rewinds twice!
 	 *
-	 * @expectedException \Exception
 	 *
 	 * @see https://www.youtube.com/watch?v=K5-bmJDlIsg
 	 */
-	public function testRewindTwice() {
+	public function testRewindTwice(): void {
+		$this->expectException(\Exception::class);
 		$iterator = new UnboxingIterator($this->mockIterableResult());
 		$iterator->rewind();
 		$iterator->rewind();

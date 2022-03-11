@@ -19,7 +19,7 @@ use Doctrine\ORM\Mapping\DefaultQuoteStrategy;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Repository\DefaultRepositoryFactory;
 use Doctrine\ORM\Tools\SchemaTool;
-use Doctrine\Common\Persistence\AbstractManagerRegistry;
+use Doctrine\Persistence\AbstractManagerRegistry;
 
 abstract class AbstractORMTestCase extends AbstractDatabaseTestCase {
 

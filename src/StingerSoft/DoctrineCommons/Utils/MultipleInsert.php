@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 use PDO;
 use function trim;
 
@@ -24,13 +23,16 @@ use function trim;
  */
 class MultipleInsert {
 	/** @var Connection */
-	private $connection;
+	private Connection $connection;
+
 	/** @var array */
-	private $inserts = [];
+	private array $inserts = [];
+
 	/** @var array */
-	private $values = [];
+	private array $values = [];
+
 	/** @var array */
-	private $types = [];
+	private array $types = [];
 
 	public function __construct(Connection $connection) {
 		$this->connection = $connection;
@@ -38,8 +40,8 @@ class MultipleInsert {
 
 	/**
 	 * @param string $tableName
-	 * @param array $data
-	 * @param array $types
+	 * @param array  $data
+	 * @param array  $types
 	 */
 	public function addInsert(string $tableName, array $data, array $types = []): void {
 		if(empty($data)) {
@@ -57,7 +59,6 @@ class MultipleInsert {
 	}
 
 	/**
-	 * @throws DBALException
 	 */
 	public function execute(): void {
 		$sql = '';
@@ -73,7 +74,7 @@ class MultipleInsert {
 		try {
 			$sql = trim($sql);
 			if(!empty($sql)) {
-				$this->connection->executeUpdate($sql, $this->values, $this->types);
+				$this->connection->executeStatement($sql, $this->values, $this->types);
 			}
 		} finally {
 			$this->inserts = [];

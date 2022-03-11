@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * This file is part of the Stinger Doctrine-Commons package.
  *
@@ -25,17 +26,17 @@ class ReplaceFunction extends FunctionNode {
 	public const IDENTIFIER = 'REPLACE';
 
 	/** @var PathExpression|Node */
-	protected $stringFirst;
+	protected Node $stringFirst;
 	/** @var PathExpression|Node */
-	protected $stringSecond;
+	protected Node $stringSecond;
 	/** @var PathExpression|Node */
-	protected $stringThird;
+	protected Node $stringThird;
 
 	/**
 	 * {@inheritdoc}
 	 * @throws ASTException
 	 */
-	public function getSql(SqlWalker $sqlWalker) {
+	public function getSql(SqlWalker $sqlWalker): string {
 		return self::IDENTIFIER . '(' . $this->stringFirst->dispatch($sqlWalker) . ','
 			. $this->stringSecond->dispatch($sqlWalker) . ','
 			. $this->stringThird->dispatch($sqlWalker) . ')';
@@ -45,7 +46,7 @@ class ReplaceFunction extends FunctionNode {
 	 * {@inheritdoc}
 	 * @throws QueryException
 	 */
-	public function parse(Parser $parser) {
+	public function parse(Parser $parser): void {
 		$parser->match(Lexer::T_IDENTIFIER);
 		$parser->match(Lexer::T_OPEN_PARENTHESIS);
 		$this->stringFirst = $parser->StringPrimary();

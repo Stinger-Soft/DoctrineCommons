@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -13,19 +14,12 @@
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 use ReflectionException;
 
 /**
  * Interface specifying common methods on entities managed by doctrine
  */
 interface DoctrineFunctionsInterface {
-
-	/**
-	 *
-	 * @var string The default service ID of the implementation (if any exists) of this service
-	 */
-	const SERVICE_ID = 'stinger_soft.commons.doctrine';
 
 	/**
 	 * Returns the class names of all managed entities implementing the specified interface
@@ -74,7 +68,7 @@ interface DoctrineFunctionsInterface {
 	/**
 	 * Returns all managed entities, filtered by the given callback
 	 *
-	 * @param callback $callback
+	 * @param callable $callback
 	 *            Callback to filter the available entities
 	 * @param boolean $groupByBundle
 	 *            If <code>false</code> is given this function will return an array of classnames, otherwise it will return an multi-dimensional associated array grouped by the bundle name of each result:
@@ -92,7 +86,7 @@ interface DoctrineFunctionsInterface {
 	 *            If <code>true</code> interfaces and abstract classes will be ignored
 	 * @return string[] all management entities implementing the given interface
 	 */
-	public function getEntitiesByCallback($callback, bool $groupByBundle = false, bool $ignoreAbstract = true): array;
+	public function getEntitiesByCallback(callable $callback, bool $groupByBundle = false, bool $ignoreAbstract = true): array;
 
 	/**
 	 * Fetches the bundle name from the given entity
@@ -115,10 +109,10 @@ interface DoctrineFunctionsInterface {
 	/**
 	 * Transforms the given doctrine proxy object into a 'real' entity
 	 *
-	 * @param object $object
+	 * @param mixed $object
 	 * @return object|NULL
 	 */
-	public function unproxifyFilter($object);
+	public function unproxifyFilter($object): ?object;
 
 	/**
 	 * Get the name / class of the icon to be displayed for the entity for a
@@ -137,7 +131,6 @@ interface DoctrineFunctionsInterface {
 	 *
 	 * @param Connection $connection
 	 * @param string $tableName
-	 * @throws DBALException
 	 */
 	public function allowIdentityInserts(Connection $connection, string $tableName): void;
 
@@ -146,7 +139,6 @@ interface DoctrineFunctionsInterface {
 	 *
 	 * @param Connection $connection
 	 * @param string $tableName
-	 * @throws DBALException
 	 */
 	public function denyIdentityInserts(Connection $connection, string $tableName): void;
 
@@ -154,7 +146,6 @@ interface DoctrineFunctionsInterface {
 	 * @param Connection $connection
 	 * @param string $tableName
 	 * @param string $columnName
-	 * @throws DBALException
 	 */
 	public function dropIndex(Connection $connection, string $tableName, string $columnName): void;
 
@@ -162,7 +153,6 @@ interface DoctrineFunctionsInterface {
 	 * @param Connection $connection
 	 * @param string $tableName
 	 * @param string $indexName
-	 * @throws DBALException
 	 */
 	public function dropIndexByName(Connection $connection, string $tableName, string $indexName): void;
 
@@ -171,7 +161,6 @@ interface DoctrineFunctionsInterface {
 	 * @param string $tableName
 	 * @param string $indexName
 	 * @return bool
-	 * @throws DBALException
 	 */
 	public function hasIndex(Connection $connection, string $tableName, string $indexName): bool;
 
@@ -180,7 +169,6 @@ interface DoctrineFunctionsInterface {
 	 * @param string $tableName
 	 * @param string $columnName
 	 * @return bool
-	 * @throws DBALException
 	 */
 	public function hasForeignKey(Connection $connection, string $tableName, string $columnName): bool;
 
@@ -188,7 +176,6 @@ interface DoctrineFunctionsInterface {
 	 * @param Connection $connection
 	 * @param string $tableName
 	 * @param string $columnName
-	 * @throws DBALException
 	 */
 	public function dropForeignKey(Connection $connection, string $tableName, string $columnName): void;
 
@@ -196,7 +183,6 @@ interface DoctrineFunctionsInterface {
 	 * @param Connection $connection
 	 * @param string $tableName
 	 * @param string $keyName
-	 * @throws DBALException
 	 */
 	public function dropForeignKeyByName(Connection $connection, string $tableName, string $keyName): void;
 

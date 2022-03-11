@@ -1,5 +1,7 @@
-<?php /** @noinspection SqlNoDataSourceInspection */
-/** @noinspection SqlDialectInspection */
+<?php /** @noinspection SqlDialectInspection */
+/** @noinspection SqlNoDataSourceInspection */
+declare(strict_types=1);
+
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -13,13 +15,13 @@
 
 namespace StingerSoft\DoctrineCommons\Utils;
 
-use Doctrine\Common\Persistence\AbstractManagerRegistry;
-use Doctrine\Common\Persistence\Mapping\ClassMetadata;
+use Doctrine\Persistence\AbstractManagerRegistry;
+use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Util\ClassUtils;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
-use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\Common\Proxy\Proxy;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
@@ -38,19 +40,19 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * @var AbstractManagerRegistry
 	 */
-	private $registry;
+	private AbstractManagerRegistry $registry;
 
 	/**
 	 *
-	 * @var KernelInterface
+	 * @var KernelInterface|null
 	 */
-	private $kernel;
+	private ?KernelInterface $kernel;
 
 	/**
 	 *
 	 * @var TranslatorInterface
 	 */
-	private $translator;
+	private TranslatorInterface $translator;
 
 	/**
 	 *
@@ -62,8 +64,8 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * Default constructor
 	 *
 	 * @param AbstractManagerRegistry $registry
-	 * @param TranslatorInterface $translator
-	 * @param KernelInterface $kernel
+	 * @param TranslatorInterface     $translator
+	 * @param KernelInterface|null    $kernel
 	 */
 	public function __construct(AbstractManagerRegistry $registry, TranslatorInterface $translator, KernelInterface $kernel = null) {
 		$this->kernel = $kernel;
@@ -134,13 +136,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	public function getHumanReadableEntityName($entity): ?string {
 		if(is_object($entity)) {
 			if(method_exists($entity, 'getEntityLabel') && method_exists($entity, 'getEntityLabelTranslationDomain')) {
-				return $this->translator->trans(call_user_func(array(
-					$entity,
-					'getEntityLabel'
-				)), array(), call_user_func(array(
-					$entity,
-					'getEntityLabelTranslationDomain'
-				)));
+				return $this->translator->trans($entity->getEntityLabel(), array(), $entity->getEntityLabelTranslationDomain());
 			}
 			return $this->getShortClassName(get_class($entity));
 		}
@@ -184,7 +180,12 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 		if(is_object($entity)) {
 			$entity = get_class($entity);
 		}
-		$dataBaseNamespace = substr($entity, 0, strpos($entity, '\\Entity\\'));
+
+		$entityPos = strpos($entity, '\\Entity\\');
+		if($entityPos === false) {
+			return null;
+		}
+		$dataBaseNamespace = substr($entity, 0, $entityPos);
 		foreach($bundles as $type => $bundle) {
 			$bundleRefClass = new ReflectionClass($bundle);
 			if($bundleRefClass->getNamespaceName() === $dataBaseNamespace) {
@@ -200,7 +201,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 *
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::unproxifyFilter()
 	 */
-	public function unproxifyFilter($object) {
+	public function unproxifyFilter($object): ?object {
 		try {
 			if(!is_object($object)) {
 				return null;
@@ -243,11 +244,12 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::allowIdentityInserts()
 	 */
 	public function allowIdentityInserts(Connection $connection, string $tableName): void {
+		/** @noinspection PhpDeprecationInspection */
 		if($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$res = $connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(PDO::FETCH_NUM);
+			$identity = $res->fetchNumeric();
 			if($identity[0]) {
-				$connection->executeUpdate("SET IDENTITY_INSERT $tableName ON;");
+				$connection->executeStatement("SET IDENTITY_INSERT $tableName ON;");
 			}
 		} else {
 			throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
@@ -260,11 +262,12 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 * @see \StingerSoft\DoctrineCommons\Utils\DoctrineFunctionsInterface::denyIdentityInserts()
 	 */
 	public function denyIdentityInserts(Connection $connection, string $tableName): void {
+		/** @noinspection PhpDeprecationInspection */
 		if($connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$res = $connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(PDO::FETCH_NUM);
+			$identity = $res->fetchNumeric();
 			if($identity[0]) {
-				$connection->executeUpdate("SET IDENTITY_INSERT $tableName OFF;");
+				$connection->executeStatement("SET IDENTITY_INSERT $tableName OFF;");
 			}
 		} else {
 			throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
@@ -278,6 +281,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function dropIndex(Connection $connection, string $tableName, string $columnName): void {
 		$platform = $connection->getDatabasePlatform();
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			$indexQuery = "select
 			i.name as IndexName,
@@ -295,13 +299,13 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			and o.name = '$tableName'
 			order by o.[name], i.[name], ic.is_included_column, ic.key_ordinal;";
 			$indexStmt = $connection->executeQuery($indexQuery);
-			foreach($indexStmt->fetchAll() as $index) {
+			foreach($indexStmt->fetchAllAssociative() as $index) {
 				$this->dropIndexByName($connection, $index['TableName'], $index['IndexName']);
 			}
 		} else if($platform instanceof MySqlPlatform) {
 			$indexQuery = "SHOW INDEX FROM $tableName WHERE Column_name = '$columnName'";
 			$indexStmt = $connection->executeQuery($indexQuery);
-			foreach($indexStmt->fetchAll() as $index) {
+			foreach($indexStmt->fetchAllAssociative() as $index) {
 				$this->dropIndexByName($connection, $index['Table'], $index['Key_name']);
 			}
 		} else {
@@ -316,6 +320,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function dropIndexByName(Connection $connection, string $tableName, string $indexName): void {
 		$platform = $connection->getDatabasePlatform();
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			if($this->hasIndex($connection, $tableName, $indexName)) {
 				$connection->executeQuery('DROP INDEX ' . $indexName . ' ON ' . $tableName);
@@ -334,6 +339,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 	 */
 	public function hasIndex(Connection $connection, string $tableName, string $indexName): bool {
 		$platform = $connection->getDatabasePlatform();
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			return $connection->executeQuery("SELECT COUNT(*) FROM sys.indexes WHERE name='" . $indexName . "' AND object_id = OBJECT_ID('" . $tableName . "')")->fetch(PDO::FETCH_COLUMN) > 0;
 		}
@@ -350,12 +356,13 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 		if($platform instanceof MySqlPlatform) {
 			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '" . $connection->getDatabase() . "' AND  TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
-			return count($foreignKeyStmt->fetchAll()) > 0;
+			return count($foreignKeyStmt->fetchAllAssociative()) > 0;
 		}
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			$foreignKeyQuery = "SELECT f.name, OBJECT_NAME(f.parent_object_id) TableName, COL_NAME(fc.parent_object_id,fc.parent_column_id) ColName FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id INNER JOIN sys.tables t ON t.OBJECT_ID = fc.parent_object_id WHERE OBJECT_NAME (f.parent_object_id) = '$tableName' AND COL_NAME(fc.parent_object_id,fc.parent_column_id) = '$columnName'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
-			return count($foreignKeyStmt->fetchAll()) > 0;
+			return count($foreignKeyStmt->fetchAllAssociative()) > 0;
 		}
 		throw new LogicException('Method "' . __METHOD__ . '" not implemented for this platform');
 	}
@@ -370,15 +377,16 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 		if($platform instanceof MySqlPlatform) {
 			$foreignKeyQuery = "SELECT DISTINCT TABLE_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = '" . $connection->getDatabase() . "' AND TABLE_NAME = '$tableName' AND COLUMN_NAME = '$columnName' AND CONSTRAINT_NAME <> 'PRIMARY'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
-			foreach($foreignKeyStmt->fetchAll() as $index) {
+			foreach($foreignKeyStmt->fetchAllAssociative() as $index) {
 				$this->dropForeignKeyByName($connection, $index['TABLE_NAME'], $index['CONSTRAINT_NAME']);
 			}
 			return;
 		}
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			$foreignKeyQuery = "SELECT f.name, OBJECT_NAME(f.parent_object_id) TableName, COL_NAME(fc.parent_object_id,fc.parent_column_id) ColName FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id INNER JOIN sys.tables t ON t.OBJECT_ID = fc.parent_object_id WHERE OBJECT_NAME (f.parent_object_id) = '$tableName' AND COL_NAME(fc.parent_object_id,fc.parent_column_id) = '$columnName'";
 			$foreignKeyStmt = $connection->executeQuery($foreignKeyQuery);
-			foreach($foreignKeyStmt->fetchAll() as $index) {
+			foreach($foreignKeyStmt->fetchAllAssociative() as $index) {
 				$this->dropForeignKeyByName($connection, $index['TableName'], $index['name']);
 			}
 			return;
@@ -397,6 +405,7 @@ class DoctrineFunctions implements DoctrineFunctionsInterface {
 			$connection->executeQuery('ALTER TABLE ' . $tableName . ' DROP FOREIGN KEY ' . $keyName);
 			return;
 		}
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			$connection->executeQuery('ALTER TABLE ' . $tableName . ' DROP CONSTRAINT ' . $keyName);
 			return;

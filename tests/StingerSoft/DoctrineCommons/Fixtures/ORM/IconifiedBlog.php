@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -18,18 +19,18 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class IconifiedBlog extends Blog {
 
-	public static function getEntityIcon($purpose = null) {
+	public static function getEntityIcon($purpose = null): string {
 		if($purpose !== null) {
 			return $purpose;
 		}
 		return "icon";
 	}
 	
-	public static function getClassLabel() {
+	public static function getClassLabel(): string {
 		return 'Blog with Icon';
 	}
 	
-	public static function getClassLabelTranslationDomain() {
+	public static function getClassLabelTranslationDomain(): string {
 		return '';
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -23,19 +24,19 @@ class JsonCountListener extends IdleListener {
 	 *
 	 * @var integer
 	 */
-	protected $entryCount = 0;
+	protected int $entryCount = 0;
 
 	/**
 	 *
 	 * @var integer
 	 */
-	protected $tableCount = 0;
+	protected int $tableCount = 0;
 
 	/**
 	 *
 	 * @var integer
 	 */
-	protected $level = 0;
+	protected int $level = 0;
 
 	/**
 	 *

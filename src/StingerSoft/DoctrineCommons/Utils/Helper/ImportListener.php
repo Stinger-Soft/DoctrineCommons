@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -14,7 +15,6 @@ namespace StingerSoft\DoctrineCommons\Utils\Helper;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use JsonStreamingParser\Listener\IdleListener;
 use StingerSoft\DoctrineCommons\Utils\JsonImporter;
@@ -30,82 +30,82 @@ class ImportListener extends IdleListener {
 	 *
 	 * @var integer
 	 */
-	protected $entries = 0;
+	protected int $entries = 0;
 
 	/**
 	 *
 	 * @var integer
 	 */
-	protected $level = 0;
+	protected int $level = 0;
 
 	/**
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	protected $currentTable;
+	protected ?string $currentTable;
 
 	/**
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	protected $currentField;
-
-	/**
-	 *
-	 * @var string[]
-	 */
-	protected $nonExistingTables = array();
+	protected ?string $currentField;
 
 	/**
 	 *
 	 * @var string[]
 	 */
-	protected $existingTables = array();
+	protected array $nonExistingTables = [];
 
 	/**
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	protected $rowData;
+	protected array $existingTables = [];
+
+	/**
+	 *
+	 * @var array|null
+	 */
+	protected ?array $rowData;
 
 	/**
 	 * The console output channel
 	 *
 	 * @var OutputInterface
 	 */
-	protected $output;
+	protected ?OutputInterface $output;
 
 	/**
 	 * The schema manager to check if a table exists
 	 *
 	 * @var AbstractSchemaManager
 	 */
-	protected $schemaManager;
+	protected AbstractSchemaManager $schemaManager;
 
 	/**
 	 * The database connection
 	 *
 	 * @var Connection
 	 */
-	protected $connection;
+	protected Connection $connection;
 
 	/**
 	 * Console helper to render a progress bar
 	 *
-	 * @var ProgressBar
+	 * @var ProgressBar|null
 	 */
-	protected $progressbar;
+	protected ?ProgressBar $progressbar = null;
 
 	/**
 	 *
 	 * @var JsonImporter
 	 */
-	protected $jsonImporter;
+	protected JsonImporter $jsonImporter;
 
 	/**
 	 * @var string[]
 	 */
-	protected $tableMapping = array();
+	protected array $tableMapping = array();
 
 
 	/**
@@ -178,7 +178,6 @@ class ImportListener extends IdleListener {
 	 * {@inheritdoc}
 	 *
 	 * @throws ConnectionException
-	 * @throws DBALException
 	 * @see \JsonStreamingParser\Listener\IdleListener::endObject()
 	 */
 	public function endObject(): void {
@@ -198,7 +197,6 @@ class ImportListener extends IdleListener {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @throws DBALException
 	 * @see \JsonStreamingParser\Listener\IdleListener::key()
 	 */
 	public function key($key): void {
