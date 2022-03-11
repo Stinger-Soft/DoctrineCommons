@@ -12,8 +12,9 @@
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\ORM\Internal\Hydration\IterableResult;
+use PHPUnit\Framework\TestCase;
 
-class UnboxingIteratorTest extends \PHPUnit_Framework_TestCase {
+class UnboxingIteratorTest extends TestCase {
 
 	protected function mockIterableResult() {
 		$resultMock = $this->getMockBuilder(IterableResult::class)->disableOriginalConstructor()->setMethods(array(

@@ -9,6 +9,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Utils\Helper;
 
 use JsonStreamingParser\Listener\IdleListener;
@@ -42,7 +43,7 @@ class JsonCountListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::startObject()
 	 */
-	public function startObject() {
+	public function startObject(): void {
 		$this->level++;
 	}
 
@@ -52,8 +53,8 @@ class JsonCountListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::endObject()
 	 */
-	public function endObject() {
-		if($this->level == 2) {
+	public function endObject(): void {
+		if($this->level === 2) {
 			$this->entryCount++;
 		}
 		$this->level--;
@@ -65,7 +66,7 @@ class JsonCountListener extends IdleListener {
 	 *
 	 * @see \JsonStreamingParser\Listener\IdleListener::key()
 	 */
-	public function key($key) {
+	public function key($key): void {
 		switch($this->level) {
 			case 1:
 				$this->tableCount++;
@@ -78,18 +79,18 @@ class JsonCountListener extends IdleListener {
 	/**
 	 * Returns the number of detected entries
 	 *
-	 * @return number
+	 * @return int
 	 */
-	public function getEntryCount() {
+	public function getEntryCount(): int {
 		return $this->entryCount;
 	}
 
 	/**
 	 * Returns the number of tables
 	 *
-	 * @return number
+	 * @return int
 	 */
-	public function getTableCount() {
+	public function getTableCount(): int {
 		return $this->tableCount;
 	}
 }

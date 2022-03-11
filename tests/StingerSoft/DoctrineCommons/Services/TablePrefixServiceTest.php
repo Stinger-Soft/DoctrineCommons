@@ -16,8 +16,9 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
+use PHPUnit\Framework\TestCase;
 
-class TablePrefixServiceTest extends \PHPUnit_Framework_TestCase {
+class TablePrefixServiceTest extends TestCase {
 
 	public static $assocMappingBefore = array(
 		'groups' => array(

@@ -10,13 +10,16 @@
 
 namespace StingerSoft\DoctrineCommons\DQL;
 
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
+use Doctrine\ORM\Query\AST\ASTException;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
 use Doctrine\ORM\Query\AST\Subselect;
 use Doctrine\ORM\Query\Lexer;
 use Doctrine\ORM\Query\Parser;
+use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\SqlWalker;
 
 /**
@@ -31,6 +34,7 @@ class FirstFunction extends FunctionNode {
 
 	/**
 	 * {@inheritdoc}
+	 * @throws QueryException
 	 */
 	public function parse(Parser $parser) {
 		$parser->match(Lexer::T_IDENTIFIER);
@@ -41,6 +45,8 @@ class FirstFunction extends FunctionNode {
 
 	/**
 	 * {@inheritdoc}
+	 * @throws DBALException
+	 * @throws ASTException
 	 */
 	public function getSql(SqlWalker $sqlWalker) {
 		$sql = $this->subselect->dispatch($sqlWalker);
@@ -50,7 +56,9 @@ class FirstFunction extends FunctionNode {
 			$replacePattern = sprintf('$1%s $2', "TOP 1");
 			$sql = preg_replace($selectPattern, $replacePattern, $sql);
 			return '(' . $sql . ')';
-		} else if ($platform instanceof MySqlPlatform || $platform instanceof SqlitePlatform) {
+		}
+
+		if($platform instanceof MySqlPlatform || $platform instanceof SqlitePlatform) {
 			return '(' . $sql . ' LIMIT 1)';
 		}
 		return '(' . $sql . ')';

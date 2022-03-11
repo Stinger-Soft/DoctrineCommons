@@ -9,15 +9,18 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\ORM\Internal\Hydration\IterableResult;
+use Exception;
+use Iterator;
 
 /**
  * When using the doctrine iterator method on a query, the root entity is hidden as the first entry of a result set.
  * This iterator will unbox the root entity.
  */
-class UnboxingIterator implements \Iterator {
+class UnboxingIterator implements Iterator {
 
 	/**
 	 *
@@ -46,7 +49,7 @@ class UnboxingIterator implements \Iterator {
 	/**
 	 * Default constructor
 	 *
-	 * @param IterableResult $iterator        	
+	 * @param IterableResult $iterator
 	 */
 	public function __construct(IterableResult $iterator) {
 		$this->iterator = $iterator;
@@ -61,15 +64,15 @@ class UnboxingIterator implements \Iterator {
 	public function next() {
 		// fetch the next one
 		$this->current = $this->iterator->next();
-		
+
 		// That's all folks, no more tests!
 		if(!$this->current) {
 			return $this->onEmpty();
 		}
-		
+
 		// stupid iterator array..
 		$this->current = $this->current[0];
-		
+
 		// More logical tests!!
 		if($this->current) {
 			$this->key++;
@@ -113,15 +116,16 @@ class UnboxingIterator implements \Iterator {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws Exception
 	 * @see Iterator::rewind()
 	 */
 	public function rewind() {
-		if($this->rewinded == true) {
-			throw new \Exception("Can only iterate a Result once.");
-		} else {
-			$this->next();
-			$this->rewinded = true;
+		if($this->rewinded === true) {
+			throw new Exception("Can only iterate a Result once.");
 		}
+
+		$this->next();
+		$this->rewinded = true;
 	}
 
 	/**

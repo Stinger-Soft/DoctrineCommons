@@ -9,6 +9,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Utils;
 
 /**
@@ -19,14 +20,16 @@ interface ExporterInterface {
 	/**
 	 * Exports all tables into the given file
 	 *
-	 * @param string $filename        	
+	 * @param string $filename
+	 * @return int Number of exported rows
 	 */
-	public function exportToFilename($filename);
+	public function exportToFilename(string $filename): int;
 
 	/**
 	 * Exports all tables into the given resource handle
 	 *
-	 * @param resource $resource        	
+	 * @param resource $resource
+	 * @return int Number of exported rows
 	 */
-	public function export($resource);
+	public function export($resource): int;
 }

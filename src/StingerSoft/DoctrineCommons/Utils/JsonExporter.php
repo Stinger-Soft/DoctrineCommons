@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection SqlNoDataSourceInspection */
+/** @noinspection SqlDialectInspection */
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -13,13 +14,16 @@
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
+use PDO;
+use function count;
 
 /**
  * Exports all tables as json formatted data
  */
 class JsonExporter implements ExporterInterface {
 
-	const CHUNK_SIZE = 300000;
+	public const CHUNK_SIZE = 300000;
 
 	/**
 	 *
@@ -27,6 +31,9 @@ class JsonExporter implements ExporterInterface {
 	 */
 	protected $connection;
 
+	/**
+	 * @var callable[]
+	 */
 	protected $listeners = array();
 
 	/**
@@ -42,19 +49,21 @@ class JsonExporter implements ExporterInterface {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws DBALException
 	 * @see \StingerSoft\DoctrineCommons\Utils\ExporterInterface::exportToFilename()
 	 */
-	public function exportToFilename($filename) {
-		$handle = fopen($filename, 'w');
-		$this->export($handle);
+	public function exportToFilename($filename): int {
+		$handle = fopen($filename, 'wb');
+		$rows = $this->export($handle);
 		fclose($handle);
+		return $rows;
 	}
 
-	public function addListener(callable $listener) {
+	public function addListener(callable $listener): void {
 		$this->listeners[] = $listener;
 	}
 
-	protected function callListeners($currentTableName, $tableNum, $tableCount, $rowNum, $rowCount) {
+	protected function callListeners($currentTableName, $tableNum, $tableCount, $rowNum, $rowCount): void {
 		foreach($this->listeners as $listener) {
 			call_user_func($listener, $currentTableName, $tableNum, $tableCount, $rowNum, $rowCount);
 		}
@@ -64,13 +73,16 @@ class JsonExporter implements ExporterInterface {
 	 *
 	 * {@inheritdoc}
 	 *
+	 * @throws DBALException
 	 * @see \StingerSoft\DoctrineCommons\Utils\ExporterInterface::export()
+	 * @noinspection DisconnectedForeachInstructionInspection
 	 */
-	public function export($resource) {
+	public function export($resource): int {
 		$tables = $this->connection->getSchemaManager()->listTables();
 
 		$i = 0;
 		$len = count($tables);
+		$totalRows = 0;
 
 		fwrite($resource, '{');
 		foreach($tables as $table) {
@@ -80,9 +92,10 @@ class JsonExporter implements ExporterInterface {
 			$lastPrimaryKeyValue = null;
 
 			$countQuery = 'SELECT COUNT(*) as count FROM ' . $table->getName();
-			$count = (int)current($this->connection->executeQuery($countQuery)->fetch(\PDO::FETCH_ASSOC));
+			$count = (int)current($this->connection->executeQuery($countQuery)->fetch(PDO::FETCH_ASSOC));
+			$totalRows += $count;
 
-			if($count > self::CHUNK_SIZE * 10 && \count($primaryKeys) === 1) {
+			if($count > self::CHUNK_SIZE * 10 && count($primaryKeys) === 1) {
 				$useHackForLargeTables = true;
 			}
 
@@ -106,12 +119,15 @@ class JsonExporter implements ExporterInterface {
 					if($lastPrimaryKeyValue !== null) {
 						$qb->where($primaryKeys[0] . ' > ' . $lastPrimaryKeyValue);
 					}
-				}else {
+				} else {
 					$qb->setFirstResult($page * self::CHUNK_SIZE);
 				}
 
 				$stmt = $qb->execute();
-				while(($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+				while(($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+					if(isset($row['doctrine_rownum'])) {
+						unset($row['doctrine_rownum']);
+					}
 					fwrite($resource, $delim);
 					fwrite($resource, json_encode($row));
 					$delim = ',';
@@ -133,5 +149,6 @@ class JsonExporter implements ExporterInterface {
 		}
 
 		fwrite($resource, '}');
+		return $totalRows;
 	}
 }

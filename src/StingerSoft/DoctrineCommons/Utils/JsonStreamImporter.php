@@ -13,6 +13,11 @@ class JsonStreamImporter extends JsonImporter {
 	private $countEntries = true;
 
 	/**
+	 * @var int
+	 */
+	private $maxEntries = 0;
+
+	/**
 	 * Set whether to count the entries of the json first in order to be able to display a progress.
 	 *
 	 * Counting the entries means that the whole json file will be parsed once. In order to increase performance, you
@@ -22,7 +27,7 @@ class JsonStreamImporter extends JsonImporter {
 	 *                           false otherwise.
 	 * @return $this
 	 */
-	public function setCountEntries($countEntries) {
+	public function setCountEntries(bool $countEntries): self {
 		$this->countEntries = $countEntries;
 
 		return $this;
@@ -37,8 +42,16 @@ class JsonStreamImporter extends JsonImporter {
 	 * @return bool true in case the entries of the json file shall be counted before importing (default),
 	 * false otherwise.
 	 */
-	public function getCountEntries() {
+	public function getCountEntries(): bool {
 		return $this->countEntries;
+	}
+
+	/**
+	 * Sets the number of insert statements necessary to import the json file.
+	 * @param int $entryCount
+	 */
+	public function setMaxEntries(int $entryCount): void {
+		$this->maxEntries = $entryCount;
 	}
 
 	/**
@@ -47,11 +60,11 @@ class JsonStreamImporter extends JsonImporter {
 	 *
 	 * @see \StingerSoft\DoctrineCommons\Utils\ImporterService::import()
 	 */
-	public function import($filename) {
-		$stream = fopen($filename, 'r');
+	public function import(string $filename): void {
+		$stream = fopen($filename, 'rb');
 		try {
-			$maxEntries = 0;
 			if($this->countEntries) {
+				$this->maxEntries = 0;
 				if($this->output) {
 					$this->output->writeln('Scanning json file...');
 				}
@@ -62,15 +75,13 @@ class JsonStreamImporter extends JsonImporter {
 				if($this->output) {
 					$this->output->writeln('Scan OK! Starting import...');
 				}
-				$maxEntries = $countListener->getEntryCount();
-			} else {
-				if($this->output) {
-					$this->output->writeln('skipping scanning of json file, limited progress will be displayed!');
-				}
+				$this->maxEntries = $countListener->getEntryCount();
+			} elseif($this->output && $this->maxEntries) {
+				$this->output->writeln('skipping scanning of json file, limited progress will be displayed!');
 			}
 			$this->connection->beginTransaction();
 			$this->before();
-			$importListener = new ImportListener($this, $this->schemaManager, $this->connection, $maxEntries, $this->output);
+			$importListener = new ImportListener($this, $this->schemaManager, $this->connection, $this->maxEntries, $this->output);
 			$parser = new \JsonStreamingParser\Parser($stream, $importListener, "\n", true, 81920);
 			$parser->parse();
 			$this->after();
