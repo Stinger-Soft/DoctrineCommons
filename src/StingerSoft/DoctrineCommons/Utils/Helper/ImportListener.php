@@ -42,13 +42,13 @@ class ImportListener extends IdleListener {
 	 *
 	 * @var string|null
 	 */
-	protected ?string $currentTable;
+	protected ?string $currentTable = null;
 
 	/**
 	 *
 	 * @var string|null
 	 */
-	protected ?string $currentField;
+	protected ?string $currentField = null;
 
 	/**
 	 *
@@ -66,7 +66,7 @@ class ImportListener extends IdleListener {
 	 *
 	 * @var array|null
 	 */
-	protected ?array $rowData;
+	protected ?array $rowData = null;
 
 	/**
 	 * The console output channel
