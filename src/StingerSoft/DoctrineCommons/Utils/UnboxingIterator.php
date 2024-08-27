@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -108,7 +109,7 @@ class UnboxingIterator implements Iterator {
 	 *
 	 * @see Iterator::valid()
 	 */
-	public function valid() {
+	public function valid(): bool {
 		return ($this->current != false);
 	}
 
@@ -119,7 +120,7 @@ class UnboxingIterator implements Iterator {
 	 * @throws Exception
 	 * @see Iterator::rewind()
 	 */
-	public function rewind() {
+	public function rewind(): void {
 		if($this->rewinded === true) {
 			throw new Exception("Can only iterate a Result once.");
 		}

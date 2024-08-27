@@ -47,6 +47,10 @@ class JsonExportTest extends TestCase {
 	
 	public function setFirstResult($first) {
 	}
+
+	public function fetchAssociative() {
+		return $this->fetch();
+	}
 	
 	public function fetch() {
 		if($this->countQuery) {

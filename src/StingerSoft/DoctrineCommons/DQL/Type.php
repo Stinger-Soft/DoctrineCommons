@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -53,7 +54,7 @@ class Type extends FunctionNode {
 	 *
 	 * @var string
 	 */
-	public $dqlAlias;
+	public string $dqlAlias;
 
 	/**
 	 *
@@ -61,7 +62,7 @@ class Type extends FunctionNode {
 	 * @return string
 	 * @throws QueryException
 	 */
-	public function getSql(SqlWalker $sqlWalker) {
+	public function getSql(SqlWalker $sqlWalker): string {
 		$qComp = $sqlWalker->getQueryComponent($this->dqlAlias);
 		/** @var ClassMetadataInfo $class */
 		$class = $qComp ['metadata'];
@@ -77,7 +78,7 @@ class Type extends FunctionNode {
 	 * @param Parser $parser
 	 * @throws QueryException
 	 */
-	public function parse(Parser $parser) {
+	public function parse(Parser $parser): void {
 		$parser->match(Lexer::T_IDENTIFIER);
 		$parser->match(Lexer::T_OPEN_PARENTHESIS);
 		$this->dqlAlias = $parser->IdentificationVariable();

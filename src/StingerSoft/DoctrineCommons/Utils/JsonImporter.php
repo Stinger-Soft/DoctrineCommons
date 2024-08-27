@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -14,7 +15,6 @@ namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ConnectionException;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
@@ -32,33 +32,33 @@ class JsonImporter implements ImporterService {
 	 *
 	 * @var Connection
 	 */
-	protected $connection;
+	protected Connection $connection;
 	/**
 	 *
 	 * @var AbstractSchemaManager
 	 */
-	protected $schemaManager;
+	protected AbstractSchemaManager $schemaManager;
 	/**
 	 *
 	 * @var OutputInterface
 	 */
-	protected $output;
+	protected ?OutputInterface $output;
 	/**
 	 * @var string[]
 	 */
-	protected $tableMapping = array();
+	protected array $tableMapping = [];
 	/**
 	 * @var MultipleInsert
 	 */
-	protected $multipleInsert;
+	protected MultipleInsert $multipleInsert;
 	/**
 	 * @var int
 	 */
-	protected $statementCounter = 0;
+	protected int $statementCounter = 0;
 	/**
 	 * @var int
 	 */
-	protected $multipleInsertCounter = 0;
+	protected int $multipleInsertCounter = 0;
 
 	/**
 	 * Default constructor
@@ -81,11 +81,10 @@ class JsonImporter implements ImporterService {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @throws DBALException
 	 * @see \StingerSoft\DoctrineCommons\Utils\ImporterService::import()
 	 */
 	public function import(string $filename): void {
-		$data = json_decode(file_get_contents($filename), true);
+		$data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
 		$this->connection->beginTransaction();
 		$this->before();
 		foreach($data as $table => $tableData) {
@@ -141,16 +140,16 @@ class JsonImporter implements ImporterService {
 	 *
 	 * @param string $tableName
 	 *            The name of the table to be filled with data
-	 * @throws DBALException
 	 */
 	public function beforeTable(string $tableName): void {
+		/** @noinspection PhpDeprecationInspection */
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$this->multipleInsert->execute();
 			$this->multipleInsertCounter = 0;
 			$res = $this->connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(PDO::FETCH_NUM);
+			$identity = $res->fetchNumeric();
 			if($identity[0]) {
-				$this->connection->executeUpdate("SET IDENTITY_INSERT $tableName ON;");
+				$this->connection->executeStatement("SET IDENTITY_INSERT $tableName ON;");
 			}
 		}
 	}
@@ -160,16 +159,16 @@ class JsonImporter implements ImporterService {
 	 *
 	 * @param string $tableName
 	 *            The name of the table to be filled with data
-	 * @throws DBALException
 	 */
 	public function afterTable(string $tableName): void {
+		/** @noinspection PhpDeprecationInspection */
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
 			$this->multipleInsert->execute();
 			$this->multipleInsertCounter = 0;
 			$res = $this->connection->executeQuery("SELECT OBJECTPROPERTY(OBJECT_ID('$tableName'), 'TableHasIdentity')");
-			$identity = $res->fetch(PDO::FETCH_NUM);
+			$identity = $res->fetchNumeric();
 			if($identity[0]) {
-				$this->connection->executeUpdate("SET IDENTITY_INSERT $tableName OFF;");
+				$this->connection->executeStatement("SET IDENTITY_INSERT $tableName OFF;");
 			}
 		}
 	}
@@ -179,7 +178,6 @@ class JsonImporter implements ImporterService {
 	 * @param array $data
 	 * @param array $types
 	 * @throws ConnectionException
-	 * @throws DBALException
 	 */
 	public function insert(string $tableExpression, array $data, array $types = []): void {
 		$this->multipleInsertCounter += count($data);
@@ -215,29 +213,29 @@ class JsonImporter implements ImporterService {
 
 	/**
 	 * Executed before the import is started
-	 * @throws DBALException
 	 */
 	protected function before(): void {
+		/** @noinspection PhpDeprecationInspection */
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
-			$this->connection->executeUpdate('EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"');
+			$this->connection->executeStatement('EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all"');
 		} else if($this->connection->getDatabasePlatform() instanceof MySqlPlatform) {
-			$this->connection->executeUpdate('SET FOREIGN_KEY_CHECKS=0');
+			$this->connection->executeStatement('SET FOREIGN_KEY_CHECKS=0');
 		} else if($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
-			$this->connection->executeUpdate('PRAGMA foreign_keys = OFF');
+			$this->connection->executeStatement('PRAGMA foreign_keys = OFF');
 		}
 	}
 
 	/**
 	 * Executed after the import is finished
-	 * @throws DBALException
 	 */
 	protected function after(): void {
+		/** @noinspection PhpDeprecationInspection */
 		if($this->connection->getDatabasePlatform() instanceof SQLServerPlatform) {
-			$this->connection->executeUpdate('exec sp_msforeachtable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"');
+			$this->connection->executeStatement('exec sp_msforeachtable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"');
 		} else if($this->connection->getDatabasePlatform() instanceof MySqlPlatform) {
-			$this->connection->executeUpdate('SET FOREIGN_KEY_CHECKS=1');
+			$this->connection->executeStatement('SET FOREIGN_KEY_CHECKS=1');
 		} else if($this->connection->getDatabasePlatform() instanceof SqlitePlatform) {
-			$this->connection->executeUpdate('PRAGMA foreign_keys = ON');
+			$this->connection->executeStatement('PRAGMA foreign_keys = ON');
 		}
 	}
 }

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /*
  * This file is part of the PEC Platform pecplatformdevelopment.
  *
@@ -10,11 +12,9 @@
 
 namespace StingerSoft\DoctrineCommons\DQL;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
-use Doctrine\ORM\Query\AST\ASTException;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
 use Doctrine\ORM\Query\AST\Subselect;
 use Doctrine\ORM\Query\Lexer;
@@ -28,15 +28,15 @@ use Doctrine\ORM\Query\SqlWalker;
  */
 class FirstFunction extends FunctionNode {
 	/**
-	 * @var Subselect
+	 * @var Subselect|null
 	 */
-	private $subselect;
+	private ?Subselect $subselect = null;
 
 	/**
 	 * {@inheritdoc}
 	 * @throws QueryException
 	 */
-	public function parse(Parser $parser) {
+	public function parse(Parser $parser): void {
 		$parser->match(Lexer::T_IDENTIFIER);
 		$parser->match(Lexer::T_OPEN_PARENTHESIS);
 		$this->subselect = $parser->Subselect();
@@ -45,12 +45,11 @@ class FirstFunction extends FunctionNode {
 
 	/**
 	 * {@inheritdoc}
-	 * @throws DBALException
-	 * @throws ASTException
 	 */
-	public function getSql(SqlWalker $sqlWalker) {
+	public function getSql(SqlWalker $sqlWalker): string {
 		$sql = $this->subselect->dispatch($sqlWalker);
 		$platform = $sqlWalker->getConnection()->getDatabasePlatform();
+		/** @noinspection PhpDeprecationInspection */
 		if($platform instanceof SQLServerPlatform) {
 			$selectPattern = '/^(\s*SELECT\s+(?:DISTINCT\s+)?)(.*)$/i';
 			$replacePattern = sprintf('$1%s $2', "TOP 1");

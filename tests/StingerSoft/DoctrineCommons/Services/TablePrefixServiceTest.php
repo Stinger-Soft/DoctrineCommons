@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -9,6 +10,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace StingerSoft\DoctrineCommons\Services;
 
 use Doctrine\DBAL\Platforms\MySqlPlatform;
@@ -20,90 +22,88 @@ use PHPUnit\Framework\TestCase;
 
 class TablePrefixServiceTest extends TestCase {
 
-	public static $assocMappingBefore = array(
-		'groups' => array(
-			'type' => ClassMetadataInfo::MANY_TO_MANY,
+	public static array $assocMappingBefore = array(
+		'groups'    => array(
+			'type'      => ClassMetadataInfo::MANY_TO_MANY,
 			'joinTable' => array(
-				'name' => 'user_group',
-				'prefixed' => false 
-			) 
+				'name'     => 'user_group',
+				'prefixed' => false
+			)
 		),
-		'roles' => array(
-			'type' => ClassMetadataInfo::MANY_TO_MANY,
+		'roles'     => array(
+			'type'      => ClassMetadataInfo::MANY_TO_MANY,
 			'joinTable' => array(
-				'name' => 'user_roles',
-				'prefixed' => true 
-			) 
+				'name'     => 'user_roles',
+				'prefixed' => true
+			)
 		),
 		'addresses' => array(
-			'type' => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadataInfo::MANY_TO_MANY,
 			'joinTable' => array(
-				'name' => 'user_addresses' 
-			) 
-		) 
+				'name' => 'user_addresses'
+			)
+		)
 	);
 
-	public static $assocMappingAfter = array(
-		'groups' => array(
-			'type' => ClassMetadataInfo::MANY_TO_MANY,
+	public static array $assocMappingAfter = array(
+		'groups'    => array(
+			'type'      => ClassMetadataInfo::MANY_TO_MANY,
 			'joinTable' => array(
-				'name' => 'platform_user_group',
-				'prefixed' => true 
-			) 
+				'name'     => 'platform_user_group',
+				'prefixed' => true
+			)
 		),
-		'roles' => array(
-			'type' => ClassMetadataInfo::MANY_TO_MANY,
+		'roles'     => array(
+			'type'      => ClassMetadataInfo::MANY_TO_MANY,
 			'joinTable' => array(
-				'name' => 'user_roles',
-				'prefixed' => true 
-			) 
+				'name'     => 'user_roles',
+				'prefixed' => true
+			)
 		),
 		'addresses' => array(
-			'type' => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadataInfo::MANY_TO_MANY,
 			'joinTable' => array(
-				'name' => 'platform_user_addresses',
-				'prefixed' => true 
-			) 
-		) 
+				'name'     => 'platform_user_addresses',
+				'prefixed' => true
+			)
+		)
 	);
 
 	/**
 	 *
 	 * @var TablePrefixService
 	 */
-	protected $prefixService;
+	protected TablePrefixService $prefixService;
 
-	public function setUp() {
+	public function setUp(): void {
 		$this->prefixService = new TablePrefixService();
 	}
 
-	public function testService() {
+	public function testService(): void {
 		$this->assertInstanceOf('StingerSoft\DoctrineCommons\Services\TablePrefixService', $this->prefixService);
 	}
 
-	public function testSubscribedEvents() {
-		$this->assertArraySubset(array(
-			'loadClassMetadata' 
-		), $this->prefixService->getSubscribedEvents());
+	public function testSubscribedEvents(): void {
+		$this->assertContains('loadClassMetadata', $this->prefixService->getSubscribedEvents());
 	}
 
-	public function testSingleInheritanceWithoutRoot() {
+	public function testSingleInheritanceWithoutRoot(): void {
 		$cm = $this->mockEventArgs();
 		$cm->method('isInheritanceTypeSingleTable')->will($this->returnValue(true));
 		$cm->method('isRootEntity')->will($this->returnValue(false));
-		
+
 		$args = new LoadClassMetadataEventArgs($cm, $this->mockEntityManager());
-		$this->assertNull($this->prefixService->loadClassMetadata($args));
+		$this->prefixService->loadClassMetadata($args);
 		$this->assertEquals($cm->associationMappings, self::$assocMappingBefore);
 	}
 
-	public function testloadClassMetadata() {
+	public function testloadClassMetadata(): void {
 		$cm = $this->mockEventArgs();
 		$cm->method('isInheritanceTypeSingleTable')->will($this->returnValue(true));
 		$cm->method('isRootEntity')->will($this->returnValue(true));
-		
+
 		$args = new LoadClassMetadataEventArgs($cm, $this->mockEntityManager());
-		$this->assertNull($this->prefixService->loadClassMetadata($args));
+		$this->prefixService->loadClassMetadata($args);
 		$this->assertEquals($cm->associationMappings, self::$assocMappingAfter);
 	}
 
@@ -112,24 +112,24 @@ class TablePrefixServiceTest extends TestCase {
 		$cm->method('isInheritanceTypeSingleTable')->will($this->returnValue(true));
 		$cm->method('isRootEntity')->will($this->returnValue(true));
 		$cm->namespace = 'Test';
-		
+
 		$args = new LoadClassMetadataEventArgs($cm, $this->mockEntityManager());
-		$this->assertNull($this->prefixService->loadClassMetadata($args));
+		$this->prefixService->loadClassMetadata($args);
 		$this->assertEquals($cm->associationMappings, self::$assocMappingBefore);
 	}
-	
+
 	public function testSqlite() {
 		$cm = $this->mockEventArgs();
 		$cm->method('isInheritanceTypeSingleTable')->will($this->returnValue(true));
 		$cm->method('isRootEntity')->will($this->returnValue(true));
-	
+
 		$args = new LoadClassMetadataEventArgs($cm, $this->mockEntityManager(SqlitePlatform::class));
 		$args->getClassMetadata()->table = array('name' => 'test', 'indexes' => array('name' => 'params'));
-		$this->assertNull($this->prefixService->loadClassMetadata($args));
+		$this->prefixService->loadClassMetadata($args);
 		$this->assertEquals($cm->associationMappings, self::$assocMappingAfter);
 		$this->assertEquals(array('platform_platform_test_name' => 'params'), $cm->table['indexes']);
 	}
-	
+
 	protected function mockEventArgs() {
 		$cm = $this->getMockBuilder('Doctrine\ORM\Mapping\ClassMetadata')->setMethods(array(
 			'getAssociationMappings',
@@ -137,10 +137,13 @@ class TablePrefixServiceTest extends TestCase {
 			'isInheritanceTypeSingleTable',
 			'isRootEntity'
 		))->setConstructorArgs(array(
-			'StingerSoftPlatform:User' 
+			'StingerSoftPlatform:User'
 		))->getMock();
 		$cm->namespace = 'StingerSoft\PlatformBundle\Entity\User';
 		$cm->associationMappings = self::$assocMappingBefore;
+		$cm->table = [
+			'name' => 'user',
+		];
 		$cm->method('getAssociationMappings')->will($this->returnValue($cm->associationMappings));
 		$cm->method('getEntityManager')->will($this->returnValue($this->mockEntityManager()));
 		// $cm->method('getConnection')->will($this->returnSelf());
@@ -151,7 +154,7 @@ class TablePrefixServiceTest extends TestCase {
 	protected function mockEntityManager($paltform = MySqlPlatform::class) {
 		$em = $this->getMockBuilder(EntityManager::class)->setMethods(array(
 			'getConnection',
-			'getDatabasePlatform' 
+			'getDatabasePlatform'
 		))->disableOriginalConstructor()->getMockForAbstractClass();
 		$em->method('getConnection')->will($this->returnSelf());
 		$em->method('getDatabasePlatform')->will($this->returnValue($this->mockPlatform($paltform)));

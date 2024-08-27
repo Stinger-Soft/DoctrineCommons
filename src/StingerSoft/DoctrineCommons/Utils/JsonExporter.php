@@ -1,5 +1,6 @@
 <?php /** @noinspection SqlNoDataSourceInspection */
 /** @noinspection SqlDialectInspection */
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -14,7 +15,6 @@
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 use PDO;
 use function count;
 
@@ -29,12 +29,12 @@ class JsonExporter implements ExporterInterface {
 	 *
 	 * @var Connection
 	 */
-	protected $connection;
+	protected Connection $connection;
 
 	/**
 	 * @var callable[]
 	 */
-	protected $listeners = array();
+	protected array $listeners = [];
 
 	/**
 	 * Default constructor
@@ -49,10 +49,9 @@ class JsonExporter implements ExporterInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @throws DBALException
 	 * @see \StingerSoft\DoctrineCommons\Utils\ExporterInterface::exportToFilename()
 	 */
-	public function exportToFilename($filename): int {
+	public function exportToFilename(string $filename): int {
 		$handle = fopen($filename, 'wb');
 		$rows = $this->export($handle);
 		fclose($handle);
@@ -63,9 +62,9 @@ class JsonExporter implements ExporterInterface {
 		$this->listeners[] = $listener;
 	}
 
-	protected function callListeners($currentTableName, $tableNum, $tableCount, $rowNum, $rowCount): void {
+	protected function callListeners(string $currentTableName, int $tableNum, int $tableCount, int $rowNum, int $rowCount): void {
 		foreach($this->listeners as $listener) {
-			call_user_func($listener, $currentTableName, $tableNum, $tableCount, $rowNum, $rowCount);
+			$listener($currentTableName, $tableNum, $tableCount, $rowNum, $rowCount);
 		}
 	}
 
@@ -73,7 +72,6 @@ class JsonExporter implements ExporterInterface {
 	 *
 	 * {@inheritdoc}
 	 *
-	 * @throws DBALException
 	 * @see \StingerSoft\DoctrineCommons\Utils\ExporterInterface::export()
 	 * @noinspection DisconnectedForeachInstructionInspection
 	 */
@@ -124,7 +122,7 @@ class JsonExporter implements ExporterInterface {
 				}
 
 				$stmt = $qb->execute();
-				while(($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+				while(($row = $stmt->fetchAssociative()) !== false) {
 					if(isset($row['doctrine_rownum'])) {
 						unset($row['doctrine_rownum']);
 					}
@@ -142,7 +140,7 @@ class JsonExporter implements ExporterInterface {
 			}
 
 			// if not last table
-			if($i != $len - 1) {
+			if($i !== $len - 1) {
 				fwrite($resource, ',');
 			}
 			$i++;

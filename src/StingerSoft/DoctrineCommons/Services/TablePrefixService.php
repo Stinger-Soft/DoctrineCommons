@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -13,7 +14,6 @@
 namespace StingerSoft\DoctrineCommons\Services;
 
 use Doctrine\Common\EventSubscriber;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
@@ -29,7 +29,7 @@ class TablePrefixService implements EventSubscriber {
 	 *
 	 * @see \Doctrine\Common\EventSubscriber::getSubscribedEvents()
 	 */
-	public function getSubscribedEvents() {
+	public function getSubscribedEvents(): array {
 		return array(
 			'loadClassMetadata'
 		);
@@ -39,7 +39,6 @@ class TablePrefixService implements EventSubscriber {
 	 * Event listeners
 	 *
 	 * @param LoadClassMetadataEventArgs $args
-	 * @throws DBALException
 	 */
 	public function loadClassMetadata(LoadClassMetadataEventArgs $args): void {
 		/**

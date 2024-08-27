@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -12,7 +13,6 @@
 
 namespace StingerSoft\DoctrineCommons\DQL;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
 use Doctrine\ORM\Query\AST\PathExpression;
@@ -35,26 +35,25 @@ class SizeIn extends FunctionNode {
 	 *
 	 * @var PathExpression
 	 */
-	public $collectionPathExpression;
+	public PathExpression $collectionPathExpression;
 
 	/**
 	 *
 	 * @var array
 	 */
-	public $literals;
+	public array $literals;
 
 	/**
 	 * Extends the original SizeFunction by adding an IN()
 	 * statement in the end, containing all literals comma separated
 	 * to join on in the given original table.column.
 	 *
-	 * @throws DBALException
 	 * @see \Doctrine\ORM\Query\AST\Functions\FunctionNode::getSql()
 	 * @see SizeFunction
 	 * {@inheritDoc}
 	 *
 	 */
-	public function getSql(SqlWalker $sqlWalker) {
+	public function getSql(SqlWalker $sqlWalker): string {
 		$platform = $sqlWalker->getEntityManager()->getConnection()->getDatabasePlatform();
 		$quoteStrategy = $sqlWalker->getEntityManager()->getConfiguration()->getQuoteStrategy();
 		$dqlAlias = $this->collectionPathExpression->identificationVariable;
@@ -137,7 +136,7 @@ class SizeIn extends FunctionNode {
 	 * {@inheritDoc}
 	 *
 	 */
-	public function parse(Parser $parser) {
+	public function parse(Parser $parser): void {
 		$parser->match(Lexer::T_IDENTIFIER);
 		$parser->match(Lexer::T_OPEN_PARENTHESIS);
 		$this->collectionPathExpression = $parser->CollectionValuedPathExpression();

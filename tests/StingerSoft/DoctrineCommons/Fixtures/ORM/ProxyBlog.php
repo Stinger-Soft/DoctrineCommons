@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
  * This file is part of the Stinger Doctrine-Commons package.
@@ -11,8 +12,7 @@
  */
 namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\Common\Proxy\Proxy;
 
 class ProxyBlog implements Proxy {
 
@@ -40,7 +40,7 @@ class ProxyBlog implements Proxy {
 	public function __getLazyProperties() {
 	}
 	
-	public function getId() {
+	public function getId(): ?int {
 		return 0;
 	}
 }

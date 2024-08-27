@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace StingerSoft\DoctrineCommons\Utils;
 
+use JsonStreamingParser\Parser;
 use StingerSoft\DoctrineCommons\Utils\Helper\JsonCountListener;
 use StingerSoft\DoctrineCommons\Utils\Helper\ImportListener;
 
@@ -10,12 +12,12 @@ class JsonStreamImporter extends JsonImporter {
 	/**
 	 * @var bool whether to count the entries of the json first in order to be able to display a progress
 	 */
-	private $countEntries = true;
+	private bool $countEntries = true;
 
 	/**
 	 * @var int
 	 */
-	private $maxEntries = 0;
+	private int $maxEntries = 0;
 
 	/**
 	 * Set whether to count the entries of the json first in order to be able to display a progress.
@@ -69,7 +71,7 @@ class JsonStreamImporter extends JsonImporter {
 					$this->output->writeln('Scanning json file...');
 				}
 				$countListener = new JsonCountListener();
-				$parser = new \JsonStreamingParser\Parser($stream, $countListener, "\n", true, 81920);
+				$parser = new Parser($stream, $countListener, "\n", true, 81920);
 				$parser->parse();
 				rewind($stream);
 				if($this->output) {
@@ -82,7 +84,7 @@ class JsonStreamImporter extends JsonImporter {
 			$this->connection->beginTransaction();
 			$this->before();
 			$importListener = new ImportListener($this, $this->schemaManager, $this->connection, $this->maxEntries, $this->output);
-			$parser = new \JsonStreamingParser\Parser($stream, $importListener, "\n", true, 81920);
+			$parser = new Parser($stream, $importListener, "\n", true, 81920);
 			$parser->parse();
 			$this->after();
 			$this->connection->commit();
