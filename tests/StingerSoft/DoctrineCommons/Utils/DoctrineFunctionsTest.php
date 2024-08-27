@@ -12,6 +12,7 @@
 
 namespace StingerSoft\DoctrineCommons\Utils;
 
+use Doctrine\Common\Proxy\Proxy;
 use StingerSoft\DoctrineCommons\AbstractORMGedmoTestCase;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\SoftdeletableCategory;
 use StingerSoft\DoctrineCommons\Fixtures\ORM\Blog;
@@ -78,14 +79,14 @@ class DoctrineFunctionsTest extends AbstractORMGedmoTestCase {
 		$category = $blog->getCategory();
 
 		$this->assertNotNull($category);
-		$this->assertInstanceOf('\Doctrine\ORM\Proxy\Proxy', $category);
+		$this->assertInstanceOf(\Doctrine\Persistence\Proxy::class, $category);
 
 		$unproxyCategory = $this->getDoctrineService()->unproxifyFilter($category);
 		$this->assertNotNull($unproxyCategory);
 		$this->assertInstanceOf(SoftdeletableCategory::class, $unproxyCategory);
 
 		$this->assertNotNull($category);
-		$this->assertInstanceOf('\Doctrine\ORM\Proxy\Proxy', $category);
+		$this->assertInstanceOf(\Doctrine\Persistence\Proxy::class, $category);
 
 		$blog2 = $this->em->getRepository(Blog::class)->findOneBy(array(
 			'title' => 'blog2'

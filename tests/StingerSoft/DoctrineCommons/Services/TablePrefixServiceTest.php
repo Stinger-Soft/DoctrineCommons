@@ -13,10 +13,11 @@ declare(strict_types=1);
 
 namespace StingerSoft\DoctrineCommons\Services;
 
-use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use PHPUnit\Framework\TestCase;
 
@@ -24,21 +25,21 @@ class TablePrefixServiceTest extends TestCase {
 
 	public static array $assocMappingBefore = array(
 		'groups'    => array(
-			'type'      => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadata::MANY_TO_MANY,
 			'joinTable' => array(
 				'name'     => 'user_group',
 				'prefixed' => false
 			)
 		),
 		'roles'     => array(
-			'type'      => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadata::MANY_TO_MANY,
 			'joinTable' => array(
 				'name'     => 'user_roles',
 				'prefixed' => true
 			)
 		),
 		'addresses' => array(
-			'type'      => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadata::MANY_TO_MANY,
 			'joinTable' => array(
 				'name' => 'user_addresses'
 			)
@@ -47,21 +48,21 @@ class TablePrefixServiceTest extends TestCase {
 
 	public static array $assocMappingAfter = array(
 		'groups'    => array(
-			'type'      => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadata::MANY_TO_MANY,
 			'joinTable' => array(
 				'name'     => 'platform_user_group',
 				'prefixed' => true
 			)
 		),
 		'roles'     => array(
-			'type'      => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadata::MANY_TO_MANY,
 			'joinTable' => array(
 				'name'     => 'user_roles',
 				'prefixed' => true
 			)
 		),
 		'addresses' => array(
-			'type'      => ClassMetadataInfo::MANY_TO_MANY,
+			'type'      => ClassMetadata::MANY_TO_MANY,
 			'joinTable' => array(
 				'name'     => 'platform_user_addresses',
 				'prefixed' => true
@@ -151,12 +152,14 @@ class TablePrefixServiceTest extends TestCase {
 		return $cm;
 	}
 
-	protected function mockEntityManager($paltform = MySqlPlatform::class) {
+	protected function mockEntityManager($paltform = MySQLPlatform::class) {
 		$em = $this->getMockBuilder(EntityManager::class)->setMethods(array(
 			'getConnection',
 			'getDatabasePlatform'
 		))->disableOriginalConstructor()->getMockForAbstractClass();
-		$em->method('getConnection')->will($this->returnSelf());
+		$connection = $this->createMock(Connection::class);
+		$connection->method('getDatabasePlatform')->willReturn($this->mockPlatform($paltform));
+		$em->method('getConnection')->willReturn($connection);
 		$em->method('getDatabasePlatform')->will($this->returnValue($this->mockPlatform($paltform)));
 		return $em;
 	}

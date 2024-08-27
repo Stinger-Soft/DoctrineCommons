@@ -21,6 +21,7 @@ use Doctrine\ORM\Query\AST\Functions\SizeFunction;
 use Doctrine\ORM\Query\Parser;
 use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\SqlWalker;
+use Doctrine\ORM\Query\TokenType;
 
 /**
  * This Doctrine function is an extension to the original SizeFunction
@@ -137,24 +138,24 @@ class SizeIn extends FunctionNode {
 	 *
 	 */
 	public function parse(Parser $parser): void {
-		$parser->match(Lexer::T_IDENTIFIER);
-		$parser->match(Lexer::T_OPEN_PARENTHESIS);
+		$parser->match(TokenType::T_IDENTIFIER);
+		$parser->match(TokenType::T_OPEN_PARENTHESIS);
 		$this->collectionPathExpression = $parser->CollectionValuedPathExpression();
-		$parser->match(Lexer::T_COMMA);
-		$parser->match(Lexer::T_OPEN_PARENTHESIS);
+		$parser->match(TokenType::T_COMMA);
+		$parser->match(TokenType::T_OPEN_PARENTHESIS);
 		// $this->conditionalExpression = $parser->InExpression();
 		$literals = array();
-		$literals[] = $parser->InParameter()->value;
+		$literals[] = $parser->InParameter()->name;
 
-		while($parser->getLexer()->isNextToken(Lexer::T_COMMA)) {
-			$parser->match(Lexer::T_COMMA);
-			$literals[] = $parser->InParameter()->value;
+		while($parser->getLexer()->isNextToken(TokenType::T_COMMA)) {
+			$parser->match(TokenType::T_COMMA);
+			$literals[] = $parser->InParameter()->name;
 		}
 
 		$this->literals = $literals;
 
-		$parser->match(Lexer::T_CLOSE_PARENTHESIS);
+		$parser->match(TokenType::T_CLOSE_PARENTHESIS);
 
-		$parser->match(Lexer::T_CLOSE_PARENTHESIS);
+		$parser->match(TokenType::T_CLOSE_PARENTHESIS);
 	}
 }

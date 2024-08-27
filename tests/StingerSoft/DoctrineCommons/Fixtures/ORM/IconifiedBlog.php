@@ -14,9 +14,7 @@ namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
+#[ORM\Entity]
 class IconifiedBlog extends Blog {
 
 	public static function getEntityIcon($purpose = null): string {

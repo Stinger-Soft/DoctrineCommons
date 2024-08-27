@@ -15,27 +15,20 @@ namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\InheritanceType('JOINED')]
 class Blog implements BlogInterface {
 
-	/**
-	 * @ORM\Id
-	 * @ORM\Column(type="integer")
-	 * @ORM\GeneratedValue(strategy="IDENTITY")
-	 */
+	#[ORM\Id]
+	#[ORM\Column(type: "integer")]
+	#[ORM\GeneratedValue(strategy: 'IDENTITY')]
 	private ?int $id;
 
-	/**
-	 * @ORM\Column(name="title", type="string", length=128)
-	 */
+	#[ORM\Column(name: "title", type: "string", length: 128)]
 	private ?string $title;
 
-	/**
-	 * @ORM\ManyToOne(targetEntity="SoftdeletableCategory", inversedBy="blogs")
-	 * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
-	 */
+	#[ORM\ManyToOne(targetEntity:SoftdeletableCategory::class, inversedBy:"blogs")]
+	#[ORM\JoinColumn(name:"category_id", referencedColumnName:"id")]
 	private ?SoftdeletableCategory $category;
 
 	public function getId(): ?int {

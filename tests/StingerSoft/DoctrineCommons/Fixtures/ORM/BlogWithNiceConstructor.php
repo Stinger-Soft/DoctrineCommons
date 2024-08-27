@@ -12,8 +12,6 @@ declare(strict_types=1);
  */
 namespace StingerSoft\DoctrineCommons\Fixtures\ORM;
 
-use Doctrine\ORM\Mapping as ORM;
-
 class BlogWithNiceConstructor {
 
 	public function __construct(Blog $blog) {

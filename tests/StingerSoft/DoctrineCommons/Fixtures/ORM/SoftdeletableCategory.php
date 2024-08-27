@@ -18,32 +18,24 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
- * @ORM\Entity
  * @Gedmo\SoftDeleteable(fieldName="deletedAt", timeAware=false)
  */
+#[ORM\Entity]
+#[Gedmo\SoftDeleteable(fieldName: "deletedAt", timeAware: false)]
 class SoftdeletableCategory {
 
-	/**
-	 * @ORM\Column(name="id", type="integer")
-	 * @ORM\Id
-	 * @ORM\GeneratedValue(strategy="IDENTITY")
-	 */
+	#[ORM\Id]
+	#[ORM\Column(type: "integer")]
+	#[ORM\GeneratedValue(strategy: 'IDENTITY')]
 	private ?int $id;
 
-	/**
-	 * @ORM\Column
-	 */
+	#[ORM\Column]
 	private ?string $title;
 
-	/**
-	 * @ORM\Column(type="datetime", nullable=true)
-	 */
+	#[ORM\Column(type: "datetime", nullable: true)]
 	private ?\DateTimeInterface $deletedAt;
 
-	/**
-	 * @var Collection|array
-	 * @ORM\OneToMany(targetEntity="Blog", mappedBy="category")
-	 */
+	#[ORM\OneToMany(targetEntity: Blog::class, mappedBy: "category")]
 	private $blogs;
 
 	public function getId(): ?int {

@@ -13,12 +13,13 @@ declare(strict_types=1);
 
 namespace StingerSoft\DoctrineCommons\DQL;
 
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
 use Doctrine\ORM\Query\Lexer;
 use Doctrine\ORM\Query\Parser;
 use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\SqlWalker;
+use Doctrine\ORM\Query\TokenType;
 
 /**
  * Based on the work of Jason Hofer: https://gist.github.com/jasonhofer/8420677
@@ -64,7 +65,7 @@ class Type extends FunctionNode {
 	 */
 	public function getSql(SqlWalker $sqlWalker): string {
 		$qComp = $sqlWalker->getQueryComponent($this->dqlAlias);
-		/** @var ClassMetadataInfo $class */
+		/** @var ClassMetadata $class */
 		$class = $qComp ['metadata'];
 		$tableAlias = $sqlWalker->getSQLTableAlias($class->getTableName(), $this->dqlAlias);
 		if(!isset ($class->discriminatorColumn ['name'])) {
@@ -79,9 +80,9 @@ class Type extends FunctionNode {
 	 * @throws QueryException
 	 */
 	public function parse(Parser $parser): void {
-		$parser->match(Lexer::T_IDENTIFIER);
-		$parser->match(Lexer::T_OPEN_PARENTHESIS);
+		$parser->match(TokenType::T_IDENTIFIER);
+		$parser->match(TokenType::T_OPEN_PARENTHESIS);
 		$this->dqlAlias = $parser->IdentificationVariable();
-		$parser->match(Lexer::T_CLOSE_PARENTHESIS);
+		$parser->match(TokenType::T_CLOSE_PARENTHESIS);
 	}
 }

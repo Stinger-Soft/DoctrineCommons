@@ -12,6 +12,7 @@
 namespace StingerSoft\DoctrineCommons\Utils;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Table;
 use PHPUnit\Framework\TestCase;
 
@@ -110,7 +111,9 @@ class JsonExportTest extends TestCase {
 		$that = $this;
 		$cmb->method('executeQuery')->will($this->returnCallback(function() use ($that){
 			$that->countQuery = true;
-			return $that;
+			$result = $this->createMock(Result::class);
+			$result->method('fetch')->willReturn($this->fetch());
+			return $result;
 		}));
 		
 		return $cmb;

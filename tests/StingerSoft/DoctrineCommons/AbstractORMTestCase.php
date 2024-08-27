@@ -11,15 +11,18 @@
  */
 namespace StingerSoft\DoctrineCommons;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver\PDO\SQLite\Driver;
 use Doctrine\Common\EventManager;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\DefaultNamingStrategy;
 use Doctrine\ORM\Mapping\DefaultQuoteStrategy;
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Repository\DefaultRepositoryFactory;
 use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\Persistence\AbstractManagerRegistry;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
+use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 
 abstract class AbstractORMTestCase extends AbstractDatabaseTestCase {
 
@@ -43,8 +46,9 @@ abstract class AbstractORMTestCase extends AbstractDatabaseTestCase {
 			'driver' => 'pdo_sqlite',
 			'memory' => true 
 		);
-		$config = null === $config ? $this->getMockAnnotatedConfig() : $config;
-		$em = EntityManager::create($conn, $config, $evm ?: $this->getEventManager());
+		$config = $config ?? $this->getMockAnnotatedConfig();
+		$connection = new Connection($conn, new Driver());
+		$em = new EntityManager($connection, $config, $evm ?: $this->getEventManager());
 		$schema = array_map(function ($class) use ($em) {
 			return $em->getClassMetadata($class);
 		}, (array)$this->getUsedEntityFixtures());
@@ -93,7 +97,7 @@ abstract class AbstractORMTestCase extends AbstractDatabaseTestCase {
 		$config->expects($this->once())->method('getProxyDir')->will($this->returnValue(__DIR__ . '/../../temp'));
 		$config->expects($this->once())->method('getProxyNamespace')->will($this->returnValue('Proxy'));
 		$config->expects($this->any())->method('getDefaultQueryHints')->will($this->returnValue(array()));
-		$config->expects($this->once())->method('getAutoGenerateProxyClasses')->will($this->returnValue(true));
+		$config->expects($this->once())->method('getAutoGenerateProxyClasses')->will($this->returnValue(1));
 		$config->expects($this->once())->method('getClassMetadataFactoryName')->will($this->returnValue('Doctrine\\ORM\\Mapping\\ClassMetadataFactory'));
 		$mappingDriver = $this->getMetadataDriverImplementation();
 		$config->expects($this->any())->method('getMetadataDriverImpl')->will($this->returnValue($mappingDriver));
@@ -107,10 +111,10 @@ abstract class AbstractORMTestCase extends AbstractDatabaseTestCase {
 	/**
 	 * Creates default mapping driver
 	 *
-	 * @return \Doctrine\ORM\Mapping\Driver\Driver
+	 * @return MappingDriver
 	 */
-	protected function getMetadataDriverImplementation() {
-		return new AnnotationDriver($_ENV['annotation_reader'], $this->getPaths());
+	protected function getMetadataDriverImplementation(): MappingDriver {
+		return new AttributeDriver($this->getPaths());
 	}
 
 	protected function getPaths() {

@@ -30,18 +30,18 @@
   },
   "license": "Apache-2.0",
   "require": {
-    "php": "^7.4||^8.0",
+    "php": "^8.1",
     "ext-json": "*",
     "ext-pdo": "*",
     "doctrine/common": "^3.0",
-    "doctrine/dbal": "^2.11||^3.0",
-    "doctrine/event-manager": "^1.1||^2.0",
-    "doctrine/persistence": "^2.3||^3.0",
-    "doctrine/orm": "^2.11",
+    "doctrine/dbal": "^3",
+    "doctrine/event-manager": "^2",
+    "doctrine/persistence": "^3",
+    "doctrine/orm": "^3",
     "salsify/json-streaming-parser": "^8.0",
-    "symfony/console": "^5.0||^6.0",
-    "symfony/http-kernel": "^5.0||^6.0",
-    "symfony/translation-contracts" : "^2.0||^3.0"
+    "symfony/console": "^6.4",
+    "symfony/http-kernel": "^6.4",
+    "symfony/translation-contracts" : "^3.0"
   },
   "require-dev": {
     "doctrine/annotations": "^1.13||^2.0",

@@ -16,7 +16,7 @@ namespace StingerSoft\DoctrineCommons\Services;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Mapping\ClassMetadata;
 
 /**
  * This service adds the bundle name as a prefix to every table name to avoid name collision between different bundles
@@ -42,7 +42,7 @@ class TablePrefixService implements EventSubscriber {
 	 */
 	public function loadClassMetadata(LoadClassMetadataEventArgs $args): void {
 		/**
-		 * @var ClassMetadataInfo $classMetadata
+		 * @var ClassMetadata $classMetadata
 		 */
 		$classMetadata = $args->getClassMetadata();
 
@@ -71,7 +71,7 @@ class TablePrefixService implements EventSubscriber {
 		}
 
 		foreach($classMetadata->getAssociationMappings() as $fieldName => $mapping) {
-			if($mapping['type'] === ClassMetadataInfo::MANY_TO_MANY && isset($classMetadata->associationMappings[$fieldName]['joinTable']['name'])) {
+			if($mapping['type'] === ClassMetadata::MANY_TO_MANY && isset($classMetadata->associationMappings[$fieldName]['joinTable']['name'])) {
 				if(isset($classMetadata->associationMappings[$fieldName]['joinTable']['prefixed']) && $classMetadata->associationMappings[$fieldName]['joinTable']['prefixed']) {
 					continue;
 				}

@@ -14,5 +14,5 @@ $loader = require __DIR__ . '/../vendor/autoload.php';
 //));
 //Gedmo\DoctrineExtensions::registerAnnotations();
 
-$reader = new AnnotationReader();
-$_ENV['annotation_reader'] = $reader;
+//$reader = new AnnotationReader();
+//$_ENV['annotation_reader'] = $reader;
